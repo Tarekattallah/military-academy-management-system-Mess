@@ -6,8 +6,7 @@ import { DataTable } from '../../components/ui/DataTable';
 import { Dialog } from '../../components/ui/Dialog';
 import { FormField } from '../../components/ui/FormField';
 import { Input } from '../../components/ui/Input';
-import { Label } from '../../components/ui/Input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/Select';
+import { SelectField } from '../../components/ui/SelectField';
 import { Badge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { AppLayout } from '../../components/layout/AppLayout';
@@ -282,39 +281,24 @@ export function ProductsPage() {
           </FormField>
 
           <div className="grid grid-cols-2 gap-4">
-            <FormField label="التصنيف" required error={errors.category?.message}>
-              <Select
-                value={control._formValues.category}
-                onValueChange={(val) => control._formValues.category = val}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="اختر التصنيف" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat._id} value={cat._id}>{cat.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <input type="hidden" {...register('category')} />
-            </FormField>
-
-            <FormField label="الوحدة" required error={errors.unit?.message}>
-              <Select
-                value={control._formValues.unit}
-                onValueChange={(val) => control._formValues.unit = val}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="اختر الوحدة" />
-                </SelectTrigger>
-                <SelectContent>
-                  {units.map((unit) => (
-                    <SelectItem key={unit._id} value={unit._id}>{unit.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <input type="hidden" {...register('unit')} />
-            </FormField>
+            <SelectField
+              control={control}
+              name="category"
+              label="التصنيف"
+              required
+              placeholder="اختر التصنيف"
+              options={categories.map((c) => ({ value: c._id, label: c.name }))}
+              error={errors.category?.message}
+            />
+            <SelectField
+              control={control}
+              name="unit"
+              label="الوحدة"
+              required
+              placeholder="اختر الوحدة"
+              options={units.map((u) => ({ value: u._id, label: u.name }))}
+              error={errors.unit?.message}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -327,23 +311,14 @@ export function ProductsPage() {
             </FormField>
           </div>
 
-          <FormField label="المورد" error={errors.supplier?.message}>
-            <Select
-              value={control._formValues.supplier}
-              onValueChange={(val) => control._formValues.supplier = val}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="اختر المورد (اختياري)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">— بدون مورد —</SelectItem>
-                {suppliers.map((sup) => (
-                  <SelectItem key={sup._id} value={sup._id}>{sup.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <input type="hidden" {...register('supplier')} />
-          </FormField>
+          <SelectField
+            control={control}
+            name="supplier"
+            label="المورد"
+            placeholder="اختر المورد (اختياري)"
+            options={suppliers.map((s) => ({ value: s._id, label: s.name }))}
+            error={errors.supplier?.message}
+          />
 
           <div className="grid grid-cols-2 gap-4">
             <FormField label="الحد الأدنى للمخزون" error={errors.minStockLevel?.message}>
@@ -365,21 +340,16 @@ export function ProductsPage() {
             </FormField>
           </div>
 
-          <FormField label="الحالة">
-            <Select
-              value={control._formValues.isActive ? 'true' : 'false'}
-              onValueChange={(val) => control._formValues.isActive = val === 'true'}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="true">نشط</SelectItem>
-                <SelectItem value="false">غير نشط</SelectItem>
-              </SelectContent>
-            </Select>
-            <input type="hidden" {...register('isActive')} />
-          </FormField>
+          <SelectField
+            control={control}
+            name="isActive"
+            label="الحالة"
+            options={[
+              { value: 'true', label: 'نشط' },
+              { value: 'false', label: 'غير نشط' },
+            ]}
+            error={errors.isActive?.message}
+          />
         </form>
       </Dialog>
 

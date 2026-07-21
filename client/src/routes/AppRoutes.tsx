@@ -2,6 +2,9 @@ import { Routes, Route } from 'react-router-dom';
 import { LoginPage } from '../pages/auth/LoginPage';
 import { DashboardPage } from '../pages/dashboard/DashboardPage';
 import { PlaceholderPage } from '../pages/PlaceholderPage';
+import { ProductsPage } from '../pages/products/ProductsPage';
+import { CategoriesPage } from '../pages/categories/CategoriesPage';
+import { UnitsPage } from '../pages/units/UnitsPage';
 import { ProtectedRoute } from './ProtectedRoute';
 
 export function AppRoutes() {
@@ -41,7 +44,7 @@ export function AppRoutes() {
         path="/products"
         element={
           <ProtectedRoute requiredPermission="products:view">
-            <PlaceholderPage title="المنتجات" />
+            <ProductsPage />
           </ProtectedRoute>
         }
       />
@@ -49,7 +52,7 @@ export function AppRoutes() {
         path="/categories"
         element={
           <ProtectedRoute requiredPermission="categories:view">
-            <PlaceholderPage title="التصنيفات" />
+            <CategoriesPage />
           </ProtectedRoute>
         }
       />
@@ -57,7 +60,7 @@ export function AppRoutes() {
         path="/units"
         element={
           <ProtectedRoute requiredPermission="units:view">
-            <PlaceholderPage title="الوحدات" />
+            <UnitsPage />
           </ProtectedRoute>
         }
       />
