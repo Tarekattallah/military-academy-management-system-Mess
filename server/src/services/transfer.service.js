@@ -1,0 +1,263 @@
+const mongoose = require('mongoose');
+const transferRepository = require('../repositories/transfer.repository');
+const batchRepository = require('../repositories/batch.repository');
+const inventoryTransactionService = require('./inventoryTransaction.service');
+const Product = require('../models/product.model');
+const Warehouse = require('../models/warehouse.model');
+const Transfer = require('../models/transfer.model');
+const AppError = require('../utils/AppError');
+
+const transferService = {
+  /**
+   * Creates a Transfer document and processes all items atomically.
+   *
+   * Workflow:
+   *   1. Validates source warehouse (exists, active)
+   *   2. Validates destination warehouse (exists, active, not same as source)
+   *   3. Validates all products (exist, active)
+   *   4. Validates source batches (exist, belong to source warehouse + product)
+   *   5. Validates available quantity for each item
+   *   6. Starts MongoDB transaction
+   *   7. Creates Transfer document
+   *   8. For each item:
+   *      a. Creates TRANSFER_OUT transaction (deducts from source batch)
+   *      b. Finds or creates destination batch
+   *      c. Creates TRANSFER_IN transaction (adds to destination batch)
+   *   9. Updates Transfer items
+   *  10. Commits transaction
+   *
+   * If any step fails, the entire operation rolls back.
+   */
+  async create(data) {
+    const { sourceWarehouse: sourceWarehouseId, destinationWarehouse: destinationWarehouseId, transferDate, notes, createdBy, items } = data;
+
+    // ── Validate source warehouse ───────────────────────────────────────
+    const sourceWarehouse = await Warehouse.findById(sourceWarehouseId);
+    if (!sourceWarehouse) throw new AppError('Source warehouse not found', 404);
+    if (!sourceWarehouse.isActive) throw new AppError('Source warehouse is inactive', 400);
+
+    // ── Validate destination warehouse ──────────────────────────────────
+    const destinationWarehouse = await Warehouse.findById(destinationWarehouseId);
+    if (!destinationWarehouse) throw new AppError('Destination warehouse not found', 404);
+    if (!destinationWarehouse.isActive) throw new AppError('Destination warehouse is inactive', 400);
+
+    // ── Validate warehouses are not the same ────────────────────────────
+    if (sourceWarehouseId === destinationWarehouseId) {
+      throw new AppError('Source and destination warehouses cannot be the same', 400);
+    }
+
+    // ── Validate all products exist and are active ───────────────────────
+    const productIds = [...new Set(items.map((item) => item.product))];
+    const products = await Product.find({ _id: { $in: productIds } });
+    const productMap = {};
+    for (const p of products) {
+      if (!p.isActive) throw new AppError(`Product "${p.name}" is inactive`, 400);
+      productMap[p._id.toString()] = p;
+    }
+    for (const pid of productIds) {
+      if (!productMap[pid]) throw new AppError(`Product ${pid} not found`, 404);
+    }
+
+    // ── Validate each item's source batch and available quantity ────────
+    // Also capture the source batch's unitCost (transfers are internal movements,
+    // so the cost remains unchanged — it is NOT a procurement event)
+    const sourceBatchMap = {};
+
+    for (const [index, item] of items.entries()) {
+      if (item.quantity <= 0) {
+        throw new AppError(`Item ${index + 1}: Quantity must be positive`, 400);
+      }
+
+      const batch = await batchRepository.findById(item.sourceBatch);
+      if (!batch) throw new AppError(`Item ${index + 1}: Source batch not found`, 404);
+
+      // Verify batch belongs to source warehouse
+      const batchWarehouseId = batch.warehouse._id ? batch.warehouse._id.toString() : batch.warehouse.toString();
+      if (batchWarehouseId !== sourceWarehouseId) {
+        throw new AppError(`Item ${index + 1}: Source batch does not belong to source warehouse`, 400);
+      }
+
+      // Verify batch belongs to the specified product
+      const batchProductId = batch.product._id ? batch.product._id.toString() : batch.product.toString();
+      if (batchProductId !== item.product) {
+        throw new AppError(`Item ${index + 1}: Source batch does not belong to the specified product`, 400);
+      }
+
+      // Verify batch is active
+      if (batch.status !== 'active') {
+        throw new AppError(`Item ${index + 1}: Source batch is not active (status: ${batch.status})`, 400);
+      }
+
+      // Verify available quantity
+      if (batch.availableQuantity < item.quantity) {
+        throw new AppError(`Item ${index + 1}: Insufficient available quantity. Requested: ${item.quantity}, Available: ${batch.availableQuantity}`, 400);
+      }
+
+      // Capture the source batch's unitCost — this is the true cost of the goods
+      // being transferred. A transfer is an internal stock movement, NOT a
+      // purchase or adjustment. The unit cost must remain unchanged.
+      sourceBatchMap[item.sourceBatch] = batch.unitCost || 0;
+    }
+
+    // ── Generate transfer number ────────────────────────────────────────
+    const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const count = await Transfer.countDocuments();
+    const transferNumber = `TRF-${datePart}-${String(count + 1).padStart(4, '0')}`;
+
+    // ── Execute all operations atomically ────────────────────────────────
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
+
+      // ── Create the Transfer document (status: completed) ──────────────
+      const transfer = await transferRepository.create({
+        transferNumber,
+        sourceWarehouse: sourceWarehouseId,
+        destinationWarehouse: destinationWarehouseId,
+        transferDate: transferDate || new Date(),
+        status: 'completed',
+        notes,
+        createdBy,
+        items: [], // items added below
+      }, session);
+
+      // ── Process each item ─────────────────────────────────────────────
+      const processedItems = [];
+
+      for (const item of items) {
+        const { product: productId, sourceBatch: sourceBatchId, destinationBatchNumber, quantity } = item;
+        const trimmedDestinationBatchNumber = destinationBatchNumber.trim().toUpperCase();
+
+        // ── Determine unit cost from source batch ────────────────────────
+        // A transfer is an internal stock movement, NOT a procurement event.
+        // The unit cost of the goods being moved does NOT change when they
+        // are transferred between warehouses. We always use the source batch's
+        // unit cost for both the TRANSFER_OUT and TRANSFER_IN transactions.
+        const effectiveUnitCost = sourceBatchMap[sourceBatchId] || 0;
+
+        // ── Step A: Create TRANSFER_OUT transaction ──────────────────────
+        // Deducts from the source batch's availableQuantity using the
+        // source batch's original unit cost.
+        const transferOutData = {
+          batch: sourceBatchId,
+          product: productId,
+          warehouse: sourceWarehouseId,
+          transactionType: 'transfer_out',
+          quantity,
+          unitCost: effectiveUnitCost,
+          referenceType: 'Transfer',
+          referenceId: transfer._id,
+          reason: `Transfer to ${destinationWarehouse.name}`,
+          performedBy: createdBy,
+          notes: notes || undefined,
+        };
+
+        await inventoryTransactionService.create(transferOutData, { session });
+
+        // ── Step B: Find or create destination batch ────────────────────
+        // Look for existing batch with same product + destination warehouse + batch number
+        let destinationBatch = await batchRepository.findByIdentifier(productId, destinationWarehouseId, trimmedDestinationBatchNumber, session);
+
+        if (destinationBatch) {
+          // Existing destination batch found. We do NOT update its unitCost
+          // because a transfer is an internal movement — the cost of goods
+          // already in this warehouse should not be overwritten. Only ensure
+          // the batch is active so TRANSFER_IN can add quantity.
+          if (destinationBatch.status !== 'active') {
+            destinationBatch = await batchRepository.updateById(destinationBatch._id, {
+              status: 'active',
+            }, session);
+          }
+        } else {
+          // New destination batch. Set its unitCost to the source batch's
+          // unit cost (the true cost of the goods being moved). The
+          // availableQuantity starts at 0 — TRANSFER_IN will add the quantity.
+          destinationBatch = await batchRepository.create({
+            product: productId,
+            warehouse: destinationWarehouseId,
+            batchNumber: trimmedDestinationBatchNumber,
+            initialQuantity: quantity,
+            availableQuantity: 0,
+            reservedQuantity: 0,
+            unitCost: effectiveUnitCost,
+            notes: notes || undefined,
+          }, session);
+        }
+
+        // ── Step C: Create TRANSFER_IN transaction ──────────────────────
+        // Adds to the destination batch's availableQuantity using the same
+        // unit cost as the source batch (cost does not change on transfer).
+        const destinationBatchId = destinationBatch._id ? destinationBatch._id.toString() : destinationBatch.toString();
+
+        const transferInData = {
+          batch: destinationBatchId,
+          product: productId,
+          warehouse: destinationWarehouseId,
+          transactionType: 'transfer_in',
+          quantity,
+          unitCost: effectiveUnitCost,
+          referenceType: 'Transfer',
+          referenceId: transfer._id,
+          reason: `Transfer from ${sourceWarehouse.name}`,
+          performedBy: createdBy,
+          notes: notes || undefined,
+        };
+
+        await inventoryTransactionService.create(transferInData, { session });
+
+        processedItems.push({
+          product: productId,
+          sourceBatch: sourceBatchId,
+          destinationBatchNumber: trimmedDestinationBatchNumber,
+          quantity,
+          unitCost: effectiveUnitCost,
+        });
+      }
+
+      // ── Update the Transfer document with processed items ─────────────
+      transfer.items = processedItems;
+      await transfer.save({ session });
+
+      await session.commitTransaction();
+
+      return transferRepository.findById(transfer._id);
+    } catch (err) {
+      await session.abortTransaction();
+      throw err;
+    } finally {
+      session.endSession();
+    }
+  },
+
+  /**
+   * Lists transfer documents with optional filters.
+   */
+  async list(query = {}) {
+    const filter = {};
+
+    if (query.sourceWarehouse) filter.sourceWarehouse = query.sourceWarehouse;
+    if (query.destinationWarehouse) filter.destinationWarehouse = query.destinationWarehouse;
+    if (query.status) filter.status = query.status;
+    if (query.search) {
+      filter.transferNumber = { $regex: query.search, $options: 'i' };
+    }
+    if (query.startDate || query.endDate) {
+      filter.transferDate = {};
+      if (query.startDate) filter.transferDate.$gte = new Date(query.startDate);
+      if (query.endDate) filter.transferDate.$lte = new Date(query.endDate);
+    }
+
+    return transferRepository.findAll(filter);
+  },
+
+  /**
+   * Gets a single transfer document by ID.
+   */
+  async getById(id) {
+    const transfer = await transferRepository.findById(id);
+    if (!transfer) throw new AppError('Transfer document not found', 404);
+    return transfer;
+  },
+};
+
+module.exports = transferService;
