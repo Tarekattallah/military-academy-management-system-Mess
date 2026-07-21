@@ -25,7 +25,7 @@ import { Label } from '../../components/ui/Input';
 
 const categorySchema = z.object({
   name: z.string().trim().min(1, 'الاسم مطلوب').max(100),
-  description: z.string().trim().max(500).optional().allow(''),
+  description: z.string().trim().max(500).optional().default(''),
   isActive: z.boolean().default(true),
 });
 

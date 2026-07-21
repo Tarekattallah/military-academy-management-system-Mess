@@ -30,7 +30,7 @@ const unitSchema = z.object({
   category: z.enum(['weight', 'volume', 'quantity', 'length', 'other'], {
     required_error: 'الفئة مطلوبة',
   }),
-  description: z.string().trim().max(500).optional().allow(''),
+  description: z.string().trim().max(500).optional().default(''),
   isActive: z.boolean().default(true),
 });
 

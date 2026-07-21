@@ -28,17 +28,17 @@ import type { Product } from '../../types/products';
 
 const productSchema = z.object({
   name: z.string().trim().min(1, 'الاسم مطلوب').max(200),
-  description: z.string().trim().max(1000).optional().allow(''),
+  description: z.string().trim().max(1000).optional().default(''),
   category: z.string().min(1, 'التصنيف مطلوب'),
   unit: z.string().min(1, 'الوحدة مطلوبة'),
   unitPrice: z.coerce.number().min(0, 'السعر لا يمكن أن يكون سالباً').default(0),
   taxRate: z.coerce.number().min(0).max(100).default(0),
-  supplier: z.string().optional().allow(''),
+  supplier: z.string().optional().default(''),
   minStockLevel: z.coerce.number().min(0).default(0),
   maxStockLevel: z.coerce.number().min(0).optional(),
-  sku: z.string().trim().max(50).optional().allow(''),
-  barcode: z.string().trim().max(100).optional().allow(''),
-  isActive: z.boolean().default(true),
+  sku: z.string().trim().max(50).optional().default(''),
+  barcode: z.string().trim().max(100).optional().default(''),
+  isActive: z.string().default('true'),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -55,7 +55,7 @@ const emptyForm: ProductFormValues = {
   maxStockLevel: undefined,
   sku: '',
   barcode: '',
-  isActive: true,
+  isActive: 'true',
 };
 
 export function ProductsPage() {
@@ -146,7 +146,7 @@ export function ProductsPage() {
       maxStockLevel: product.maxStockLevel,
       sku: product.sku || '',
       barcode: product.barcode || '',
-      isActive: product.isActive,
+      isActive: String(product.isActive),
     });
     setOpen(true);
   }
@@ -156,6 +156,7 @@ export function ProductsPage() {
       ...values,
       supplier: values.supplier || null,
       maxStockLevel: values.maxStockLevel || null,
+      isActive: values.isActive === 'true',
     };
     if (editing) {
       updateMutation.mutate({ id: editing._id, data: payload });
