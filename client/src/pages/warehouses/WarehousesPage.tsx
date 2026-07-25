@@ -15,80 +15,78 @@ import { Input } from '../../components/ui/Input';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { AppLayout } from '../../components/layout/AppLayout';
 import { useAuth } from '../../contexts/AuthContext';
-import { getSuppliers, createSupplier, updateSupplier, deleteSupplier } from '../../lib/api/entities';
-import type { Supplier } from '../../types/products';
-import type { SupplierFormValues } from '../../types/suppliers';
+import { getWarehouses, createWarehouse, updateWarehouse, deleteWarehouse } from '../../lib/api/entities';
+import type { Warehouse } from '../../types/warehouses';
+import type { WarehouseFormValues } from '../../types/warehouses';
 
-const supplierSchema = z.object({
-  name: z.string().trim().min(1, 'الاسم مطلوب').max(100),
-  contactPerson: z.string().trim().max(100).optional().or(z.literal('')),
+const warehouseSchema = z.object({
+  name: z.string().trim().min(1, 'اسم المستودع مطلوب').max(100),
+  code: z.string().trim().min(1, 'كود المستودع مطلوب').max(20),
+  location: z.string().trim().max(200).optional().or(z.literal('')),
+  manager: z.string().trim().max(100).optional().or(z.literal('')),
   phone: z.string().trim().max(30).optional().or(z.literal('')),
-  email: z.string().trim().email('البريد الإلكتروني غير صحيح').optional().or(z.literal('')),
-  address: z.string().trim().max(300).optional().or(z.literal('')),
-  taxId: z.string().trim().max(50).optional().or(z.literal('')),
   notes: z.string().trim().max(500).optional().or(z.literal('')),
   isActive: z.boolean().default(true),
 });
 
-type SupplierFormSchema = z.infer<typeof supplierSchema>;
+type WarehouseFormSchema = z.infer<typeof warehouseSchema>;
 
-export function SuppliersPage() {
+export function WarehousesPage() {
   const queryClient = useQueryClient();
   const { hasPermission } = useAuth();
   const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Supplier | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<Supplier | null>(null);
+  const [editing, setEditing] = useState<Warehouse | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Warehouse | null>(null);
 
-  const canCreate = hasPermission('suppliers:create');
-  const canUpdate = hasPermission('suppliers:update');
-  const canDelete = hasPermission('suppliers:delete');
+  const canCreate = hasPermission('warehouses:create');
+  const canUpdate = hasPermission('warehouses:update');
+  const canDelete = hasPermission('warehouses:delete');
 
-  const { data: suppliers = [], isLoading, error } = useQuery({
-    queryKey: ['suppliers'],
-    queryFn: getSuppliers,
+  const { data: warehouses = [], isLoading, error } = useQuery({
+    queryKey: ['warehouses'],
+    queryFn: getWarehouses,
   });
 
   const createMutation = useMutation({
-    mutationFn: createSupplier,
+    mutationFn: createWarehouse,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['warehouses'] });
       setOpen(false);
-      toast.success('تم إنشاء المورد بنجاح');
+      toast.success('تم إنشاء المستودع بنجاح');
     },
-    onError: (err: Error) => toast.error(err.message || 'فشل إنشاء المورد'),
+    onError: (err: Error) => toast.error(err.message || 'فشل إنشاء المستودع'),
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<SupplierFormValues> }) => {
-      return updateSupplier(id, data);
+    mutationFn: ({ id, data }: { id: string; data: Partial<WarehouseFormValues> }) => {
+      return updateWarehouse(id, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['warehouses'] });
       setOpen(false);
-      toast.success('تم تحديث المورد بنجاح');
+      toast.success('تم تحديث المستودع بنجاح');
     },
-    onError: (err: Error) => toast.error(err.message || 'فشل تحديث المورد'),
+    onError: (err: Error) => toast.error(err.message || 'فشل تحديث المستودع'),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deleteSupplier,
+    mutationFn: deleteWarehouse,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['warehouses'] });
       setDeleteTarget(null);
-      toast.success('تم حذف المورد بنجاح');
+      toast.success('تم حذف المستودع بنجاح');
     },
-    onError: (err: Error) => toast.error(err.message || 'فشل حذف المورد'),
+    onError: (err: Error) => toast.error(err.message || 'فشل حذف المستودع'),
   });
 
-  const form = useForm<SupplierFormSchema>({
-    resolver: zodResolver(supplierSchema) as any,
+  const form = useForm<WarehouseFormSchema>({
+    resolver: zodResolver(warehouseSchema) as any,
     defaultValues: {
       name: '',
-      contactPerson: '',
+      code: '',
+      location: '',
+      manager: '',
       phone: '',
-      email: '',
-      address: '',
-      taxId: '',
       notes: '',
       isActive: true,
     },
@@ -98,40 +96,36 @@ export function SuppliersPage() {
     setEditing(null);
     form.reset({
       name: '',
-      contactPerson: '',
+      code: '',
+      location: '',
+      manager: '',
       phone: '',
-      email: '',
-      address: '',
-      taxId: '',
       notes: '',
       isActive: true,
     });
     setOpen(true);
   }
 
-  function handleOpenEdit(supplier: Supplier) {
-    setEditing(supplier);
+  function handleOpenEdit(warehouse: Warehouse) {
+    setEditing(warehouse);
     form.reset({
-      name: supplier.name,
-      contactPerson: supplier.contactPerson || '',
-      phone: supplier.phone || '',
-      email: supplier.email || '',
-      address: supplier.address || '',
-      taxId: supplier.taxId || '',
-      notes: supplier.notes || '',
-      isActive: supplier.isActive,
+      name: warehouse.name,
+      code: warehouse.code,
+      location: warehouse.location || '',
+      manager: warehouse.manager || '',
+      phone: warehouse.phone || '',
+      notes: warehouse.notes || '',
+      isActive: warehouse.isActive,
     });
     setOpen(true);
   }
 
-  function handleSubmit(values: SupplierFormSchema) {
-    const payload: SupplierFormValues = {
+  function handleSubmit(values: WarehouseFormSchema) {
+    const payload: WarehouseFormValues = {
       ...values,
-      contactPerson: values.contactPerson || undefined,
+      location: values.location || undefined,
+      manager: values.manager || undefined,
       phone: values.phone || undefined,
-      email: values.email || undefined,
-      address: values.address || undefined,
-      taxId: values.taxId || undefined,
       notes: values.notes || undefined,
     };
 
@@ -146,35 +140,42 @@ export function SuppliersPage() {
     {
       accessorKey: 'name',
       header: 'الاسم',
-      cell: ({ row }: { row: { original: Supplier } }) => (
+      cell: ({ row }: { row: { original: Warehouse } }) => (
         <span className="font-medium text-foreground">{row.original.name}</span>
       ),
     },
     {
-      accessorKey: 'contactPerson',
-      header: 'جهة الاتصال',
-      cell: ({ row }: { row: { original: Supplier } }) => (
-        <span className="text-muted-foreground">{row.original.contactPerson || '—'}</span>
+      accessorKey: 'code',
+      header: 'الكود',
+      cell: ({ row }: { row: { original: Warehouse } }) => (
+        <span className="font-mono text-muted-foreground">{row.original.code}</span>
+      ),
+    },
+    {
+      accessorKey: 'location',
+      header: 'الموقع',
+      cell: ({ row }: { row: { original: Warehouse } }) => (
+        <span className="text-muted-foreground">{row.original.location || '—'}</span>
+      ),
+    },
+    {
+      accessorKey: 'manager',
+      header: 'المسؤول',
+      cell: ({ row }: { row: { original: Warehouse } }) => (
+        <span className="text-muted-foreground">{row.original.manager || '—'}</span>
       ),
     },
     {
       accessorKey: 'phone',
       header: 'الهاتف',
-      cell: ({ row }: { row: { original: Supplier } }) => (
+      cell: ({ row }: { row: { original: Warehouse } }) => (
         <span dir="ltr" className="text-muted-foreground">{row.original.phone || '—'}</span>
-      ),
-    },
-    {
-      accessorKey: 'email',
-      header: 'البريد الإلكتروني',
-      cell: ({ row }: { row: { original: Supplier } }) => (
-        <span className="text-muted-foreground">{row.original.email || '—'}</span>
       ),
     },
     {
       accessorKey: 'isActive',
       header: 'الحالة',
-      cell: ({ row }: { row: { original: Supplier } }) => (
+      cell: ({ row }: { row: { original: Warehouse } }) => (
         row.original.isActive ? (
           <Badge variant="success">نشط</Badge>
         ) : (
@@ -185,7 +186,7 @@ export function SuppliersPage() {
     {
       id: 'actions',
       header: 'إجراءات',
-      cell: ({ row }: { row: { original: Supplier } }) => (
+      cell: ({ row }: { row: { original: Warehouse } }) => (
         <div className="flex items-center gap-1">
           {canUpdate && (
             <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(row.original)} title="تعديل">
@@ -205,14 +206,14 @@ export function SuppliersPage() {
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <AppLayout title="الموردين">
+    <AppLayout title="المستودعات">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>قائمة الموردين</CardTitle>
+          <CardTitle>قائمة المستودعات</CardTitle>
           {canCreate && (
             <Button onClick={handleOpenCreate}>
               <Plus className="size-4" />
-              إضافة مورد
+              إضافة مستودع
             </Button>
           )}
         </CardHeader>
@@ -225,10 +226,10 @@ export function SuppliersPage() {
             </div>
           ) : error ? (
             <div className="text-center text-destructive py-8">فشل تحميل البيانات</div>
-          ) : suppliers.length === 0 ? (
-            <EmptyState title="لا توجد موردين" description="قم بإضافة مورد جديد للبدء" />
+          ) : warehouses.length === 0 ? (
+            <EmptyState title="لا توجد مستودعات" description="قم بإضافة مستودع جديد للبدء" />
           ) : (
-            <DataTable columns={columns} data={suppliers} searchKey="name" searchPlaceholder="بحث عن مورد..." />
+            <DataTable columns={columns} data={warehouses} searchKey="name" searchPlaceholder="بحث عن مستودع..." />
           )}
         </CardContent>
       </Card>
@@ -237,45 +238,41 @@ export function SuppliersPage() {
       <Dialog
         open={open}
         onOpenChange={setOpen}
-        title={editing ? 'تعديل مورد' : 'إضافة مورد'}
-        description={editing ? 'تعديل بيانات المورد' : 'إدخال بيانات المورد الجديد'}
+        title={editing ? 'تعديل مستودع' : 'إضافة مستودع'}
+        description={editing ? 'تعديل بيانات المستودع' : 'إدخال بيانات المستودع الجديد'}
         footer={
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>
               إلغاء
             </Button>
-            <Button form="supplier-form" type="submit" isLoading={isSubmitting}>
+            <Button form="warehouse-form" type="submit" isLoading={isSubmitting}>
               حفظ
             </Button>
           </div>
         }
       >
-        <form id="supplier-form" onSubmit={form.handleSubmit((values) => handleSubmit(values))} className="space-y-4">
+        <form id="warehouse-form" onSubmit={form.handleSubmit((values) => handleSubmit(values))} className="space-y-4">
           <FormField label="الاسم" required error={form.formState.errors.name?.message}>
-            <Input {...form.register('name')} placeholder="اسم المورد" />
+            <Input {...form.register('name')} placeholder="اسم المستودع" />
           </FormField>
 
-          <FormField label="جهة الاتصال" error={form.formState.errors.contactPerson?.message}>
-            <Input {...form.register('contactPerson')} placeholder="جهة الاتصال" />
+          <FormField label="الكود" required error={form.formState.errors.code?.message}>
+            <Input {...form.register('code')} placeholder="كود المستودع" />
+          </FormField>
+
+          <FormField label="الموقع" error={form.formState.errors.location?.message}>
+            <Input {...form.register('location')} placeholder="موقع المستودع" />
           </FormField>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="المسؤول" error={form.formState.errors.manager?.message}>
+              <Input {...form.register('manager')} placeholder="اسم المسؤول" />
+            </FormField>
+
             <FormField label="الهاتف" error={form.formState.errors.phone?.message}>
               <Input {...form.register('phone')} placeholder="رقم الهاتف" dir="ltr" />
             </FormField>
-
-            <FormField label="البريد الإلكتروني" error={form.formState.errors.email?.message}>
-              <Input {...form.register('email')} placeholder="البريد الإلكتروني" type="email" />
-            </FormField>
           </div>
-
-          <FormField label="العنوان" error={form.formState.errors.address?.message}>
-            <Input {...form.register('address')} placeholder="العنوان" />
-          </FormField>
-
-          <FormField label="الرقم الضريبي" error={form.formState.errors.taxId?.message}>
-            <Input {...form.register('taxId')} placeholder="الرقم الضريبي" />
-          </FormField>
 
           <FormField label="ملاحظات" error={form.formState.errors.notes?.message}>
             <Input {...form.register('notes')} placeholder="ملاحظات" />
@@ -298,7 +295,7 @@ export function SuppliersPage() {
       <Dialog
         open={!!deleteTarget}
         onOpenChange={(v) => !v && setDeleteTarget(null)}
-        title="حذف المورد"
+        title="حذف المستودع"
         description={`هل أنت متأكد من حذف "${deleteTarget?.name}"؟ لا يمكن التراجع عن هذا الإجراء.`}
         footer={
           <div className="flex justify-end gap-2">

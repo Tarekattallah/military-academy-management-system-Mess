@@ -1,13 +1,27 @@
 import { Routes, Route } from 'react-router-dom';
 import { LoginPage } from '../pages/auth/LoginPage';
 import { DashboardPage } from '../pages/dashboard/DashboardPage';
-import { PlaceholderPage } from '../pages/PlaceholderPage';
+import { WarehousesPage } from '../pages/warehouses/WarehousesPage';
+import { InventoryPage } from '../pages/inventory/InventoryPage';
+import { ReceivingPage } from '../pages/receiving/ReceivingPage';
+import { TransfersPage } from '../pages/transfers/TransfersPage';
+import { ReturnsPage } from '../pages/returns/ReturnsPage';
+import { WastePage } from '../pages/waste/WastePage';
+import { StockCountsPage } from '../pages/stockCounts/StockCountsPage';
+import { BatchesPage } from '../pages/batches/BatchesPage';
 import { ProductsPage } from '../pages/products/ProductsPage';
 import { CategoriesPage } from '../pages/categories/CategoriesPage';
 import { UnitsPage } from '../pages/units/UnitsPage';
 import { UsersPage } from '../pages/users/UsersPage';
 import { RolesPage } from '../pages/roles/RolesPage';
 import { SuppliersPage } from '../pages/suppliers/SuppliersPage';
+import { RecipesPage } from '../pages/recipes/RecipesPage';
+import { MenusPage } from '../pages/menus/MenusPage';
+import { MealRequestsPage } from '../pages/mealRequests/MealRequestsPage';
+import { ReservationsPage } from '../pages/reservations/ReservationsPage';
+import { MealAttendancePage } from '../pages/mealAttendance/MealAttendancePage';
+import { ReportsPage } from '../pages/reports/ReportsPage';
+import { SettingsPage } from '../pages/settings/SettingsPage';
 import { ProtectedRoute } from './ProtectedRoute';
 
 export function AppRoutes() {
@@ -79,7 +93,7 @@ export function AppRoutes() {
         path="/warehouses"
         element={
           <ProtectedRoute requiredPermission="warehouses:view">
-            <PlaceholderPage title="المستودعات" />
+            <WarehousesPage />
           </ProtectedRoute>
         }
       />
@@ -89,7 +103,7 @@ export function AppRoutes() {
         path="/receiving"
         element={
           <ProtectedRoute requiredPermission="receiving:view">
-            <PlaceholderPage title="استلام البضائع" />
+            <ReceivingPage />
           </ProtectedRoute>
         }
       />
@@ -97,7 +111,7 @@ export function AppRoutes() {
         path="/transfers"
         element={
           <ProtectedRoute requiredPermission="transfers:view">
-            <PlaceholderPage title="التحويلات" />
+            <TransfersPage />
           </ProtectedRoute>
         }
       />
@@ -105,15 +119,15 @@ export function AppRoutes() {
         path="/returns"
         element={
           <ProtectedRoute requiredPermission="returns:view">
-            <PlaceholderPage title="المرتجعات" />
+            <ReturnsPage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/waste"
         element={
-          <ProtectedRoute requiredPermission="waste:view">
-            <PlaceholderPage title="الهالك" />
+          <ProtectedRoute requiredPermission="wastes:view">
+            <WastePage />
           </ProtectedRoute>
         }
       />
@@ -121,7 +135,7 @@ export function AppRoutes() {
         path="/stock-counts"
         element={
           <ProtectedRoute requiredPermission="stock-counts:view">
-            <PlaceholderPage title="جرد المخزون" />
+            <StockCountsPage />
           </ProtectedRoute>
         }
       />
@@ -129,7 +143,7 @@ export function AppRoutes() {
         path="/batches"
         element={
           <ProtectedRoute requiredPermission="batches:view">
-            <PlaceholderPage title="الدفعات" />
+            <BatchesPage />
           </ProtectedRoute>
         }
       />
@@ -137,7 +151,7 @@ export function AppRoutes() {
         path="/inventory"
         element={
           <ProtectedRoute requiredPermission="inventory-transactions:view">
-            <PlaceholderPage title="المخزون" />
+            <InventoryPage />
           </ProtectedRoute>
         }
       />
@@ -147,7 +161,7 @@ export function AppRoutes() {
         path="/menus"
         element={
           <ProtectedRoute requiredPermission="menus:view">
-            <PlaceholderPage title="قوائم الطعام" />
+            <MenusPage />
           </ProtectedRoute>
         }
       />
@@ -155,7 +169,7 @@ export function AppRoutes() {
         path="/recipes"
         element={
           <ProtectedRoute requiredPermission="recipes:view">
-            <PlaceholderPage title="الوصفات" />
+            <RecipesPage />
           </ProtectedRoute>
         }
       />
@@ -163,7 +177,7 @@ export function AppRoutes() {
         path="/meal-attendance"
         element={
           <ProtectedRoute requiredPermission="meal-attendance:view">
-            <PlaceholderPage title="الحضور" />
+            <MealAttendancePage />
           </ProtectedRoute>
         }
       />
@@ -171,7 +185,7 @@ export function AppRoutes() {
         path="/meal-requests"
         element={
           <ProtectedRoute requiredPermission="meal-requests:view">
-            <PlaceholderPage title="طلبات الوجبات" />
+            <MealRequestsPage />
           </ProtectedRoute>
         }
       />
@@ -179,7 +193,7 @@ export function AppRoutes() {
         path="/reservations"
         element={
           <ProtectedRoute requiredPermission="reservations:view">
-            <PlaceholderPage title="الحجوزات" />
+            <ReservationsPage />
           </ProtectedRoute>
         }
       />
@@ -189,7 +203,7 @@ export function AppRoutes() {
         path="/reports"
         element={
           <ProtectedRoute requiredPermission="reports:view">
-            <PlaceholderPage title="التقارير" />
+            <ReportsPage />
           </ProtectedRoute>
         }
       />
@@ -199,7 +213,7 @@ export function AppRoutes() {
         path="/settings"
         element={
           <ProtectedRoute requiredPermission="settings:view">
-            <PlaceholderPage title="إعدادات النظام" />
+            <SettingsPage />
           </ProtectedRoute>
         }
       />

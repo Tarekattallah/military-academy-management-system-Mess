@@ -85,7 +85,7 @@ export function CategoriesPage() {
     reset,
     formState: { errors, isSubmitting },
   } = useForm<CategoryFormValues>({
-    resolver: zodResolver(categorySchema),
+    resolver: zodResolver(categorySchema) as any,
     defaultValues: emptyForm,
   });
 
@@ -197,7 +197,7 @@ export function CategoriesPage() {
           </div>
         }
       >
-        <form id="category-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form id="category-form" onSubmit={handleSubmit((values) => onSubmit(values))} className="space-y-4">
           <FormField label="الاسم" required error={errors.name?.message}>
             <Input {...register('name')} placeholder="اسم التصنيف" />
           </FormField>

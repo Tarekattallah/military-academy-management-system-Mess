@@ -92,7 +92,7 @@ export function RolesPage() {
   });
 
   const form = useForm<RoleFormValues>({
-    resolver: zodResolver(roleSchema),
+    resolver: zodResolver(roleSchema) as any,
     defaultValues: { name: '', description: '', permissions: [] },
   });
 
@@ -143,7 +143,9 @@ export function RolesPage() {
         <div className="flex items-center gap-2">
           <span className="font-medium text-foreground">{row.original.name}</span>
           {row.original.isSystem && (
-            <Shield className="size-4 text-primary" title="دور نظام" />
+            <span title="دور نظام">
+              <Shield className="size-4 text-primary" />
+            </span>
           )}
         </div>
       ),
@@ -247,12 +249,12 @@ export function RolesPage() {
           </div>
         }
       >
-        <form id="role-form" onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-          <FormField label="الاسم" required error={form.errors.name?.message}>
+        <form id="role-form" onSubmit={form.handleSubmit((values) => handleSubmit(values))} className="space-y-4">
+          <FormField label="الاسم" required error={form.formState.errors.name?.message}>
             <Input {...form.register('name')} placeholder="اسم الدور" />
           </FormField>
 
-          <FormField label="الوصف" error={form.errors.description?.message}>
+          <FormField label="الوصف" error={form.formState.errors.description?.message}>
             <Input {...form.register('description')} placeholder="وصف الدور" />
           </FormField>
 

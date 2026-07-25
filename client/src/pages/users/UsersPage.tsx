@@ -108,7 +108,7 @@ export function UsersPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateFormValues }) => {
+    mutationFn: ({ id, data }: { id: string; data: any }) => {
       return updateUser(id, {
         displayName: data.displayName,
         email: data.email || undefined,
@@ -135,12 +135,12 @@ export function UsersPage() {
   });
 
   const createForm = useForm<CreateFormValues>({
-    resolver: zodResolver(createUserSchema),
+    resolver: zodResolver(createUserSchema) as any,
     defaultValues: createEmptyForm(),
   });
 
   const updateForm = useForm<UpdateFormValues>({
-    resolver: zodResolver(updateUserSchema),
+    resolver: zodResolver(updateUserSchema) as any,
     defaultValues: {
       displayName: '',
       email: '',
@@ -187,10 +187,10 @@ export function UsersPage() {
   }
 
   function handleToggleRole(roleId: string, isCreate: boolean) {
-    const form = isCreate ? createForm : updateForm;
-    const currentRoles = form.getValues('roles');
+    const form: any = isCreate ? createForm : updateForm;
+    const currentRoles = form.getValues('roles') || [];
     const updated = currentRoles.includes(roleId)
-      ? currentRoles.filter((id) => id !== roleId)
+      ? currentRoles.filter((id: string) => id !== roleId)
       : [...currentRoles, roleId];
     form.setValue('roles', updated, { shouldValidate: true });
   }
@@ -312,20 +312,20 @@ export function UsersPage() {
         }
       >
         {editing ? (
-          <form id="update-user-form" onSubmit={updateForm.handleSubmit(handleUpdateSubmit)} className="space-y-4">
-            <FormField label="اسم المستخدم" error={updateForm.errors.displayName?.message}>
+          <form id="update-user-form" onSubmit={updateForm.handleSubmit((values) => handleUpdateSubmit(values))} className="space-y-4">
+            <FormField label="اسم المستخدم" error={updateForm.formState.errors.displayName?.message}>
               <Input value={editing.username} disabled />
             </FormField>
 
-            <FormField label="الاسم الظاهر" required error={updateForm.errors.displayName?.message}>
+            <FormField label="الاسم الظاهر" required error={updateForm.formState.errors.displayName?.message}>
               <Input {...updateForm.register('displayName')} placeholder="الاسم الظاهر" />
             </FormField>
 
-            <FormField label="البريد الإلكتروني" error={updateForm.errors.email?.message}>
+            <FormField label="البريد الإلكتروني" error={updateForm.formState.errors.email?.message}>
               <Input {...updateForm.register('email')} placeholder="البريد الإلكتروني" type="email" />
             </FormField>
 
-            <FormField label="كلمة المرور (اختياري)" error={updateForm.errors.password?.message}>
+            <FormField label="كلمة المرور (اختياري)" error={updateForm.formState.errors.password?.message}>
               <Input {...updateForm.register('password')} placeholder="اترك فارغاً إذا لم ترد التغيير" type="password" />
             </FormField>
 
@@ -346,8 +346,8 @@ export function UsersPage() {
                   </label>
                 ))}
               </div>
-              {updateForm.errors.roles && (
-                <p className="text-xs font-medium text-destructive">{updateForm.errors.roles.message}</p>
+              {updateForm.formState.errors.roles && (
+                <p className="text-xs font-medium text-destructive">{updateForm.formState.errors.roles.message}</p>
               )}
             </div>
 
@@ -372,24 +372,24 @@ export function UsersPage() {
             </div>
           </form>
         ) : (
-          <form id="create-user-form" onSubmit={createForm.handleSubmit(handleCreateSubmit)} className="space-y-4">
-            <FormField label="اسم المستخدم" required error={createForm.errors.username?.message}>
+          <form id="create-user-form" onSubmit={createForm.handleSubmit((values) => handleCreateSubmit(values))} className="space-y-4">
+            <FormField label="اسم المستخدم" required error={createForm.formState.errors.username?.message}>
               <Input {...createForm.register('username')} placeholder="اسم المستخدم" />
             </FormField>
 
-            <FormField label="الاسم الظاهر" required error={createForm.errors.displayName?.message}>
+            <FormField label="الاسم الظاهر" required error={createForm.formState.errors.displayName?.message}>
               <Input {...createForm.register('displayName')} placeholder="الاسم الظاهر" />
             </FormField>
 
-            <FormField label="البريد الإلكتروني" error={createForm.errors.email?.message}>
+            <FormField label="البريد الإلكتروني" error={createForm.formState.errors.email?.message}>
               <Input {...createForm.register('email')} placeholder="البريد الإلكتروني" type="email" />
             </FormField>
 
-            <FormField label="كلمة المرور" required error={createForm.errors.password?.message}>
+            <FormField label="كلمة المرور" required error={createForm.formState.errors.password?.message}>
               <Input {...createForm.register('password')} placeholder="كلمة المرور" type="password" />
             </FormField>
 
-            <FormField label="تأكيد كلمة المرور" required error={createForm.errors.confirmPassword?.message}>
+            <FormField label="تأكيد كلمة المرور" required error={createForm.formState.errors.confirmPassword?.message}>
               <Input {...createForm.register('confirmPassword')} placeholder="تأكيد كلمة المرور" type="password" />
             </FormField>
 
@@ -410,8 +410,8 @@ export function UsersPage() {
                   </label>
                 ))}
               </div>
-              {createForm.errors.roles && (
-                <p className="text-xs font-medium text-destructive">{createForm.errors.roles.message}</p>
+              {createForm.formState.errors.roles && (
+                <p className="text-xs font-medium text-destructive">{createForm.formState.errors.roles.message}</p>
               )}
             </div>
 

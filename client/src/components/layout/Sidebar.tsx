@@ -46,7 +46,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { to: '/receiving', label: 'استلام البضائع', icon: PackagePlus, permission: 'receiving:view' },
   { to: '/transfers', label: 'التحويلات', icon: ArrowLeftRight, permission: 'transfers:view' },
   { to: '/returns', label: 'المرتجعات', icon: Undo2, permission: 'returns:view' },
-  { to: '/waste', label: 'الهالك', icon: Trash2, permission: 'waste:view' },
+  { to: '/waste', label: 'الهالك', icon: Trash2, permission: 'wastes:view' },
   { to: '/stock-counts', label: 'جرد المخزون', icon: ClipboardList, permission: 'stock-counts:view' },
   { to: '/batches', label: 'الدفعات', icon: Layers, permission: 'batches:view' },
   { to: '/inventory', label: 'المخزون', icon: ClipboardCheck, permission: 'inventory-transactions:view' },
@@ -61,7 +61,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
 
 export function Sidebar() {
   const { user, hasPermission } = useAuth();
-  const { isSidebarCollapsed, toggleSidebar, isMobileSidebarOpen, setMobileSidebarOpen } = useUiStore();
+  const { isSidebarCollapsed, isMobileSidebarOpen, setMobileSidebarOpen } = useUiStore();
 
   const visibleItems = ALL_NAV_ITEMS.filter((item) => {
     if (!item.permission) return true;

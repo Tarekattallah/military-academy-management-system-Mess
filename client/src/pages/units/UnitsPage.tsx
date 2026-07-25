@@ -101,7 +101,7 @@ export function UnitsPage() {
     control,
     formState: { errors, isSubmitting },
   } = useForm<UnitFormValues>({
-    resolver: zodResolver(unitSchema),
+    resolver: zodResolver(unitSchema) as any,
     defaultValues: emptyForm,
   });
 

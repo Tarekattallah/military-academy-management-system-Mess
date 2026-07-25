@@ -6,7 +6,7 @@ interface DialogProps {
   onOpenChange: (open: boolean) => void;
   title: string;
   description?: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   footer?: React.ReactNode;
 }
 
@@ -45,7 +45,7 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
             <X className="size-4" />
           </button>
         </div>
-        <div className="p-4">{children}</div>
+        {children && <div className="p-4">{children}</div>}
         {footer && <div className="border-t border-border px-4 py-3">{footer}</div>}
       </div>
     </div>

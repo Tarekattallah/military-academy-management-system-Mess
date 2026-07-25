@@ -25,11 +25,9 @@ import {
   PackageCheck,
   Warehouse,
   Truck,
-  Users,
   ChefHat,
   BookOpen,
   CalendarCheck,
-  Factory,
   BadgeDollarSign,
   Layers,
   Clock,
@@ -340,7 +338,7 @@ function ReservationSection() {
   if (isLoading) return <LoadingSkeleton />;
   if (error || !data) return <ErrorCard message="فشل تحميل بيانات الحجوزات" />;
 
-  const hasData = Object.values(data).some((v) => v > 0);
+  const hasData = Object.values(data as unknown as Record<string, number>).some((v) => v > 0);
 
   if (!hasData) {
     return (
@@ -373,7 +371,7 @@ function DistributionSection() {
   if (isLoading) return <LoadingSkeleton />;
   if (error || !data) return <ErrorCard message="فشل تحميل بيانات التوزيعات" />;
 
-  const hasData = Object.values(data).some((v) => v > 0);
+  const hasData = Object.values(data as unknown as Record<string, number>).some((v) => v > 0);
 
   if (!hasData) {
     return (
@@ -422,13 +420,13 @@ function WarehouseSection() {
         {
           accessorKey: 'totalValue',
           header: 'القيمة',
-          cell: ({ row }: { row: { original: { totalValue: number } } }) =>
+          cell: ({ row }: { row: any }) =>
             `${row.original.totalValue.toLocaleString('ar-EG')} ر.س`,
         },
         {
           accessorKey: 'lowStockItems',
           header: 'منخفض المخزون',
-          cell: ({ row }: { row: { original: { lowStockItems: number } } }) => (
+          cell: ({ row }: { row: any }) => (
             <Badge variant={row.original.lowStockItems > 0 ? 'destructive' : 'success'}>
               {row.original.lowStockItems}
             </Badge>
