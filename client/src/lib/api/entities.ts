@@ -1,5 +1,18 @@
 import api from '../api';
 import type { Product, Category, Unit, Supplier } from '../types/products';
+import type { SupplierFormValues } from '../types/suppliers';
+import type {
+  DashboardSummary,
+  InventoryOverview,
+  TodayOperations,
+  ConsumptionAnalytics,
+  WasteAnalytics,
+  ReservationAnalytics,
+  DistributionAnalytics,
+  WarehouseStatistics,
+} from '../types/dashboard';
+import type { User, UserFormValues, UserUpdateValues } from '../types/users';
+import type { Role, Permission } from '../types/roles';
 
 export async function getProducts() {
   const { data } = await api.get('/products');
@@ -84,4 +97,128 @@ export async function deleteUnit(id: string) {
 export async function getSuppliers() {
   const { data } = await api.get('/suppliers');
   return data.data as Supplier[];
+}
+
+export async function getSupplierById(id: string) {
+  const { data } = await api.get(`/suppliers/${id}`);
+  return data.data as Supplier;
+}
+
+export async function createSupplier(payload: SupplierFormValues) {
+  const { data } = await api.post('/suppliers', payload);
+  return data.data as Supplier;
+}
+
+export async function updateSupplier(id: string, payload: Partial<SupplierFormValues>) {
+  const { data } = await api.patch(`/suppliers/${id}`, payload);
+  return data.data as Supplier;
+}
+
+export async function deleteSupplier(id: string) {
+  const { data } = await api.delete(`/suppliers/${id}`);
+  return data;
+}
+
+// ── Permissions API ───────────────────────────────────────────────────
+
+export async function getPermissions() {
+  const { data } = await api.get('/permissions');
+  return data.data as Permission[];
+}
+
+// ── Roles API ─────────────────────────────────────────────────────────
+
+export async function getRoles() {
+  const { data } = await api.get('/roles');
+  return data.data as Role[];
+}
+
+export async function getRoleById(id: string) {
+  const { data } = await api.get(`/roles/${id}`);
+  return data.data as Role;
+}
+
+export async function createRole(payload: { name: string; description?: string; permissions: string[] }) {
+  const { data } = await api.post('/roles', payload);
+  return data.data as Role;
+}
+
+export async function updateRole(id: string, payload: { name?: string; description?: string; permissions?: string[] }) {
+  const { data } = await api.patch(`/roles/${id}`, payload);
+  return data.data as Role;
+}
+
+export async function deleteRole(id: string) {
+  const { data } = await api.delete(`/roles/${id}`);
+  return data;
+}
+
+// ── Users API ─────────────────────────────────────────────────────────
+
+export async function getUsers() {
+  const { data } = await api.get('/users');
+  return data.data as User[];
+}
+
+export async function getUserById(id: string) {
+  const { data } = await api.get(`/users/${id}`);
+  return data.data as User;
+}
+
+export async function createUser(payload: UserFormValues) {
+  const { confirmPassword, ...body } = payload;
+  const { data } = await api.post('/users', body);
+  return data.data as User;
+}
+
+export async function updateUser(id: string, payload: UserUpdateValues) {
+  const { data } = await api.patch(`/users/${id}`, payload);
+  return data.data as User;
+}
+
+export async function deleteUser(id: string) {
+  const { data } = await api.delete(`/users/${id}`);
+  return data;
+}
+
+// ── Dashboard API ──────────────────────────────────────────────────────
+
+export async function getDashboardSummary() {
+  const { data } = await api.get('/dashboard/summary');
+  return data.data as DashboardSummary;
+}
+
+export async function getDashboardInventory() {
+  const { data } = await api.get('/dashboard/inventory');
+  return data.data as InventoryOverview;
+}
+
+export async function getDashboardToday() {
+  const { data } = await api.get('/dashboard/today');
+  return data.data as TodayOperations;
+}
+
+export async function getDashboardConsumption() {
+  const { data } = await api.get('/dashboard/consumption');
+  return data.data as ConsumptionAnalytics;
+}
+
+export async function getDashboardWaste() {
+  const { data } = await api.get('/dashboard/waste');
+  return data.data as WasteAnalytics;
+}
+
+export async function getDashboardReservations() {
+  const { data } = await api.get('/dashboard/reservations');
+  return data.data as ReservationAnalytics;
+}
+
+export async function getDashboardDistributions() {
+  const { data } = await api.get('/dashboard/distributions');
+  return data.data as DistributionAnalytics;
+}
+
+export async function getDashboardWarehouses() {
+  const { data } = await api.get('/dashboard/warehouses');
+  return data.data as WarehouseStatistics;
 }

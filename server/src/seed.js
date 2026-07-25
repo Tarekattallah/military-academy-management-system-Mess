@@ -34,6 +34,7 @@ const MODULES = [
   'meal-distributions',
   'reports',
   'settings',
+  'dashboard',
 ];
 const ACTIONS = ['view', 'create', 'update', 'delete', 'approve'];
 

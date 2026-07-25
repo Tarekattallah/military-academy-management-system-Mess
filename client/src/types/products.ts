@@ -21,9 +21,12 @@ export interface Unit {
 export interface Supplier {
   _id: string;
   name: string;
-  contactEmail?: string;
-  contactPhone?: string;
+  contactPerson?: string;
+  phone?: string;
+  email?: string;
   address?: string;
+  taxId?: string;
+  notes?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

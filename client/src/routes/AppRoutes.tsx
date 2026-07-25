@@ -5,6 +5,9 @@ import { PlaceholderPage } from '../pages/PlaceholderPage';
 import { ProductsPage } from '../pages/products/ProductsPage';
 import { CategoriesPage } from '../pages/categories/CategoriesPage';
 import { UnitsPage } from '../pages/units/UnitsPage';
+import { UsersPage } from '../pages/users/UsersPage';
+import { RolesPage } from '../pages/roles/RolesPage';
+import { SuppliersPage } from '../pages/suppliers/SuppliersPage';
 import { ProtectedRoute } from './ProtectedRoute';
 
 export function AppRoutes() {
@@ -26,7 +29,7 @@ export function AppRoutes() {
         path="/users"
         element={
           <ProtectedRoute requiredPermission="users:view">
-            <PlaceholderPage title="المستخدمين" />
+            <UsersPage />
           </ProtectedRoute>
         }
       />
@@ -34,7 +37,7 @@ export function AppRoutes() {
         path="/roles"
         element={
           <ProtectedRoute requiredPermission="roles:view">
-            <PlaceholderPage title="الصلاحيات" />
+            <RolesPage />
           </ProtectedRoute>
         }
       />
@@ -68,7 +71,7 @@ export function AppRoutes() {
         path="/suppliers"
         element={
           <ProtectedRoute requiredPermission="suppliers:view">
-            <PlaceholderPage title="الموردين" />
+            <SuppliersPage />
           </ProtectedRoute>
         }
       />
