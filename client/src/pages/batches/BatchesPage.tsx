@@ -4,7 +4,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { Plus, Eye, Trash2, Pencil } from 'lucide-react';
+import { Plus, Eye, Trash2, Pencil, Download } from 'lucide-react';
+import { exportToCSV } from '../../lib/csvExport';
 import { useAuth } from '../../contexts/AuthContext';
 import { AppLayout } from '../../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
@@ -77,6 +78,9 @@ export function BatchesPage() {
   const [open, setOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Batch | null>(null);
   const [viewTarget, setViewTarget] = useState<Batch | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [statusUpdateTarget, setStatusUpdateTarget] = useState<Batch | null>(null);
+  const [newStatus, setNewStatus] = useState<BatchStatus>('active');
   const [selectedProduct, setSelectedProduct] = useState('');
   const [selectedWarehouse, setSelectedWarehouse] = useState('');
   const [selectedBStatus, setSelectedBStatus] = useState('');
@@ -140,9 +144,23 @@ export function BatchesPage() {
     mutationFn: (id: string) => deleteBatch(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['batches'] });
+      setDeleteTarget(null);
       toast.success('تم حذف الدفعة بنجاح');
     },
     onError: (err: Error) => toast.error(err.message || 'فشل حذف الدفعة'),
+  });
+
+  const statusUpdateMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: BatchStatus }) => {
+      if (!user) throw new Error('User not authenticated');
+      return updateBatch(id, { status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['batches'] });
+      setStatusUpdateTarget(null);
+      toast.success('تم تحديث حالة الدفعة بنجاح');
+    },
+    onError: (err: Error) => toast.error(err.message || 'فشل تحديث حالة الدفعة'),
   });
 
   const {
@@ -187,9 +205,17 @@ export function BatchesPage() {
   }
 
   function handleDelete(id: string) {
-    if (confirm('هل أنت متأكد من حذف هذه الدفعة؟')) {
-      deleteMutation.mutate(id);
-    }
+    setDeleteTarget(id);
+  }
+
+  function handleOpenStatusUpdate(batch: Batch) {
+    setNewStatus(batch.status);
+    setStatusUpdateTarget(batch);
+  }
+
+  function handleConfirmStatusUpdate() {
+    if (!statusUpdateTarget) return;
+    statusUpdateMutation.mutate({ id: statusUpdateTarget._id, status: newStatus });
   }
 
   function onSubmit(values: BatchFormValues) {
@@ -222,6 +248,11 @@ export function BatchesPage() {
       <div className="flex items-center gap-1">
         <Button variant="ghost" size="icon" onClick={() => handleView(row.original._id)} title="عرض"><Eye className="size-4" /></Button>
         {canUpdate && <Button variant="ghost" size="icon" onClick={() => handleEdit(row.original)} title="تعديل"><Pencil className="size-4" /></Button>}
+        {canUpdate && (
+          <Button variant="ghost" size="icon" onClick={() => handleOpenStatusUpdate(row.original)} title="تحديث الحالة">
+            <svg className="size-4 text-amber-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 3v6h-6"/></svg>
+          </Button>
+        )}
         {canDelete && <Button variant="ghost" size="icon" onClick={() => handleDelete(row.original._id)} title="حذف"><Trash2 className="size-4 text-destructive" /></Button>}
       </div>
     )},
@@ -232,7 +263,32 @@ export function BatchesPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>قائمة الدفعات</CardTitle>
-          {canCreate && <Button onClick={handleOpenCreate}><Plus className="size-4" /> دفعة جديدة</Button>}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                exportToCSV(
+                  filtered,
+                  [
+                    { header: 'رقم الدفعة', accessor: (r) => r.batchNumber },
+                    { header: 'المنتج', accessor: (r) => r.product.name },
+                    { header: 'المستودع', accessor: (r) => r.warehouse.name },
+                    { header: 'الكمية المتاحة', accessor: (r) => r.availableQuantity },
+                    { header: 'الكمية المحجوزة', accessor: (r) => r.reservedQuantity },
+                    { header: 'تكلفة الوحدة', accessor: (r) => r.unitCost },
+                    { header: 'الحالة', accessor: (r) => r.status },
+                    { header: 'تاريخ الصلاحية', accessor: (r) => r.expiryDate ? new Date(r.expiryDate).toLocaleDateString('ar-EG') : '' },
+                  ],
+                  'batches'
+                )
+              }
+            >
+              <Download className="size-4" />
+              تصدير
+            </Button>
+            {canCreate && <Button onClick={handleOpenCreate}><Plus className="size-4" /> دفعة جديدة</Button>}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="mb-4 flex flex-wrap gap-2">
@@ -257,7 +313,7 @@ export function BatchesPage() {
           {isLoading ? (
             <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-10 animate-pulse rounded-md bg-secondary" />)}</div>
           ) : error ? (
-            <div className="text-center text-destructive py-8">فشل تحميل البيانات</div>
+            <div className="text-center text-destructive py-8 font-medium">فشل تحميل البيانات: {error.message}</div>
           ) : filtered.length === 0 ? (
             <EmptyState title="لا توجد دفعات" description="قم بإضافة دفعة جديدة للبدء" />
           ) : (
@@ -341,6 +397,94 @@ export function BatchesPage() {
           </div>
         )}
       </Dialog>
+
+      <Dialog
+        open={!!statusUpdateTarget}
+        onOpenChange={(v) => !v && setStatusUpdateTarget(null)}
+        title="تحديث حالة الدفعة"
+        description={statusUpdateTarget ? `تغيير حالة الدفعة: ${statusUpdateTarget.batchNumber}` : ''}
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setStatusUpdateTarget(null)} disabled={statusUpdateMutation.isPending}>
+              إلغاء
+            </Button>
+            <Button
+              onClick={handleConfirmStatusUpdate}
+              isLoading={statusUpdateMutation.isPending}
+            >
+              تأكيد تحديث الحالة
+            </Button>
+          </div>
+        }
+      >
+        {statusUpdateTarget && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p className="text-xs text-muted-foreground">رقم الدفعة</p>
+                <p className="font-mono font-medium">{statusUpdateTarget.batchNumber}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">المنتج</p>
+                <p className="font-medium">{statusUpdateTarget.product.name}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">المستودع</p>
+                <p className="font-medium">{statusUpdateTarget.warehouse.name}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">الكمية المتاحة</p>
+                <p className="font-mono font-medium">{statusUpdateTarget.availableQuantity}</p>
+              </div>
+            </div>
+
+            <div className="border-t border-border pt-3">
+              <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">الحالة الجديدة</label>
+              <select
+                value={newStatus}
+                onChange={(e) => setNewStatus(e.target.value as BatchStatus)}
+                className="flex h-9 w-full rounded-md border border-input bg-card px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="active">نشط</option>
+                <option value="depleted">منتهي (مستنفد)</option>
+                <option value="expired">منتهي الصلاحية</option>
+                <option value="quarantined">محجوز (حجر صحي)</option>
+                <option value="archived">مؤرشف</option>
+              </select>
+            </div>
+
+            {statusUpdateTarget.status === newStatus && (
+              <p className="text-xs text-amber-500 font-medium">الحالة الحالية والجديدة متطابقتان. اختر حالة مختلفة لتحديث الدفعة.</p>
+            )}
+
+            <div className="rounded-md bg-secondary/30 p-3 text-xs text-muted-foreground">
+              <p className="font-semibold mb-1">ملاحظة هامة:</p>
+              <p>تحديث حالة الدفعة لا يؤثر على كميات المخزون الفعلية. إذا كنت تريد تصحيح كميات المخزون، يرجى استخدام عمليات الجرد أو حركات المخزون المناسبة.</p>
+            </div>
+          </div>
+        )}
+      </Dialog>
+
+      <Dialog
+        open={!!deleteTarget}
+        onOpenChange={(v) => !v && setDeleteTarget(null)}
+        title="حذف الدفعة"
+        description="هل أنت متأكد من حذف هذه الدفعة؟ لا يمكن التراجع عن هذا الإجراء."
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+              إلغاء
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget)}
+              isLoading={deleteMutation.isPending}
+            >
+              حذف
+            </Button>
+          </div>
+        }
+      />
     </AppLayout>
   );
 }

@@ -60,6 +60,7 @@ const ROLE_DEFS = [
     description: 'Manages warehouse operations. Can approve receiving, transfers, returns, waste, and stock adjustments.',
     isSystem: true,
     permissions: [
+      'dashboard:view',
       // Products & suppliers
       'products:view', 'products:create', 'products:update',
       'categories:view', 'categories:create', 'categories:update',
@@ -89,6 +90,7 @@ const ROLE_DEFS = [
     description: 'Handles daily warehouse operations: receiving, transfers, returns, waste, stock counts, and batch updates.',
     isSystem: true,
     permissions: [
+      'dashboard:view',
       // Read-only access to products & warehouses
       'products:view',
       'categories:view',
@@ -115,6 +117,7 @@ const ROLE_DEFS = [
     description: 'Manages meal planning: menus, recipes, attendance, meal requests, and reservations.',
     isSystem: true,
     permissions: [
+      'dashboard:view',
       // Full meal module access
       'menus:view', 'menus:create', 'menus:update', 'menus:delete',
       'recipes:view', 'recipes:create', 'recipes:update', 'recipes:delete',
@@ -254,7 +257,21 @@ async function seed() {
   console.log('[seed] Done');
 }
 
-seed().catch((err) => {
+async function run() {
+  await seed();
+  // If --with-mock-data flag is provided, also seed demo data
+  if (process.argv.includes('--with-mock-data')) {
+    console.log('[seed] Running mock data seeder...');
+    try {
+      const { seedMockData } = require('./seedMockData');
+      await seedMockData();
+    } catch (err) {
+      console.error('[seed] Mock data seeder failed:', err.message);
+    }
+  }
+}
+
+run().catch((err) => {
   console.error('[seed] Failed:', err);
   process.exit(1);
 });

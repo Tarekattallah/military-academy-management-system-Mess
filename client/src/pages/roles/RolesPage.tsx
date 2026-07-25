@@ -223,7 +223,7 @@ export function RolesPage() {
               ))}
             </div>
           ) : error ? (
-            <div className="text-center text-destructive py-8">فشل تحميل البيانات</div>
+            <div className="text-center text-destructive py-8 font-medium">فشل تحميل البيانات: {error.message}</div>
           ) : roles.length === 0 ? (
             <EmptyState title="لا توجد أدوار" description="قم بإضافة دور جديد للبدء" />
           ) : (

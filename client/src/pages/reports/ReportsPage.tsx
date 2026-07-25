@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { FileText, Download, Activity } from 'lucide-react';
+import { FileText, Download, Activity, Printer } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { FormField } from '../../components/ui/FormField';
@@ -284,10 +284,21 @@ export function ReportsPage() {
               <FileText className="size-4 text-primary" />
               {REPORT_TYPES.find((t) => t.value === reportType)?.label}
             </CardTitle>
-            <Button variant="outline" size="sm" onClick={handleExportCsv} disabled={reportData.length === 0}>
-              <Download className="size-4" />
-              تصدير CSV
-            </Button>
+            <div className="flex items-center gap-2 print-hide">
+              <Button variant="outline" size="sm" onClick={handleExportCsv} disabled={reportData.length === 0}>
+                <Download className="size-4" />
+                تصدير CSV
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.print()}
+                disabled={reportData.length === 0}
+              >
+                <Printer className="size-4" />
+                طباعة
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {isFetching ? (

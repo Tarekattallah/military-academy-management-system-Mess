@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 
 const env = require('./config/env');
 const routes = require('./routes');
+const auditLogger = require('./middlewares/auditLogger');
 const { notFound, errorHandler } = require('./middlewares/errorHandler');
 
 const app = express();
@@ -25,6 +26,7 @@ if (env.nodeEnv !== 'test') {
   app.use(morgan(env.nodeEnv === 'production' ? 'combined' : 'dev'));
 }
 
+app.use('/api/v1', auditLogger);
 app.use('/api/v1', routes);
 
 app.use(notFound);

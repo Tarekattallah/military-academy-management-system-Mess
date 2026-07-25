@@ -258,6 +258,69 @@ const returnService = {
     if (!returnDoc) throw new AppError('Return document not found', 404);
     return returnDoc;
   },
+
+  /**
+   * Cancels (voids) a completed return document.
+   *
+   * Workflow:
+   *   1. Validates the return exists and is in 'completed' status
+   *   2. For each item:
+   *      - For return_to_supplier: creates a reversal (+1) to add quantity back
+   *      - For internal_return: creates a cancellation (-1) to deduct quantity
+   *   3. Updates the return status to 'cancelled'
+   *   4. All operations in a single MongoDB transaction
+   */
+  async cancel(id, performedBy, reason) {
+    const returnDoc = await returnRepository.findById(id);
+    if (!returnDoc) throw new AppError('Return document not found', 404);
+    if (returnDoc.status !== 'completed') {
+      throw new AppError(`Cannot cancel a return with status "${returnDoc.status}". Only completed returns can be cancelled.`, 400);
+    }
+
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
+
+      // Determine the reversal transaction type
+      // return_to_supplier is -1 (outbound), so reversal is +1
+      // internal_return/return is +1 (inbound), so cancellation is -1
+      const reversalType = returnDoc.returnType === 'return_to_supplier' ? 'reversal' : 'cancellation';
+
+      for (const item of returnDoc.items) {
+        const { product, batch: batchId, quantity } = item;
+
+        await inventoryTransactionService.create({
+          batch: batchId,
+          product,
+          warehouse: returnDoc.warehouse,
+          transactionType: reversalType,
+          quantity,
+          unitCost: 0,
+          referenceType: 'Return',
+          referenceId: returnDoc._id,
+          reason: reason || `Cancellation of return ${returnDoc.returnNumber} (reverse ${returnDoc.returnType})`,
+          performedBy,
+          notes: `Reversed return: ${reversalType === 'reversal' ? 'added' : 'deducted'} ${quantity} units from batch`,
+        }, { session });
+      }
+
+      // ── Update the return status to cancelled ───────────────────────────
+      await returnRepository.updateById(returnDoc._id, {
+        status: 'cancelled',
+        notes: returnDoc.notes
+          ? `${returnDoc.notes} | CANCELLED: ${reason || 'No reason provided'}`
+          : `CANCELLED: ${reason || 'No reason provided'}`,
+      }, session);
+
+      await session.commitTransaction();
+      return returnRepository.findById(returnDoc._id);
+    } catch (err) {
+      await session.abortTransaction();
+      throw err;
+    } finally {
+      session.endSession();
+    }
+  },
 };
 
 module.exports = returnService;

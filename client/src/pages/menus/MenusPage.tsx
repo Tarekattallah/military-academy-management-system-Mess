@@ -245,7 +245,7 @@ export function MenusPage() {
               ))}
             </div>
           ) : error ? (
-            <div className="text-center text-destructive py-8 font-medium">فشل تحميل البيانات</div>
+            <div className="text-center text-destructive py-8 font-medium">فشل تحميل البيانات: {error.message}</div>
           ) : menus.length === 0 ? (
             <EmptyState title="لا توجد قوائم طعام" description="قم بإضافة قائمة طعام جديدة لتخطيط الوجبات وصرف المكونات" />
           ) : (

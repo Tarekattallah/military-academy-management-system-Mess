@@ -258,6 +258,86 @@ const transferService = {
     if (!transfer) throw new AppError('Transfer document not found', 404);
     return transfer;
   },
+
+  /**
+   * Cancels (voids) a completed transfer document.
+   *
+   * Workflow:
+   *   1. Validates the transfer exists and is in 'completed' status
+   *   2. For each item:
+   *      a. Reverse TRANSFER_IN: deduct from destination batch
+   *      b. Reverse TRANSFER_OUT: add back to source batch
+   *      c. Create cancellation transactions for audit trail
+   *   3. Updates the transfer status to 'cancelled'
+   *   4. All operations in a single MongoDB transaction
+   */
+  async cancel(id, performedBy, reason) {
+    const transfer = await transferRepository.findById(id);
+    if (!transfer) throw new AppError('Transfer document not found', 404);
+    if (transfer.status !== 'completed') {
+      throw new AppError(`Cannot cancel a transfer with status "${transfer.status}". Only completed transfers can be cancelled.`, 400);
+    }
+
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
+
+      for (const item of transfer.items) {
+        const { product, sourceBatch, destinationBatchNumber, quantity } = item;
+
+        // ── Reverse TRANSFER_OUT: add back to source batch ────────────────
+        // Create a cancellation transaction that adds quantity back to source batch
+        await inventoryTransactionService.create({
+          batch: sourceBatch,
+          product,
+          warehouse: transfer.sourceWarehouse,
+          transactionType: 'cancellation',
+          quantity,
+          unitCost: item.unitCost || 0,
+          referenceType: 'Transfer',
+          referenceId: transfer._id,
+          reason: reason || `Cancellation of transfer ${transfer.transferNumber} (reverse transfer_out)`,
+          performedBy,
+          notes: `Reversed transfer_out: added ${quantity} units back to source batch`,
+        }, { session });
+
+        // ── Reverse TRANSFER_IN: deduct from destination batch ────────────
+        // Find the destination batch
+        const destinationBatch = await batchRepository.findByIdentifier(product, transfer.destinationWarehouse, destinationBatchNumber, session);
+        if (destinationBatch) {
+          await inventoryTransactionService.create({
+            batch: destinationBatch._id,
+            product,
+            warehouse: transfer.destinationWarehouse,
+            transactionType: 'cancellation',
+            quantity,
+            unitCost: item.unitCost || 0,
+            referenceType: 'Transfer',
+            referenceId: transfer._id,
+            reason: reason || `Cancellation of transfer ${transfer.transferNumber} (reverse transfer_in)`,
+            performedBy,
+            notes: `Reversed transfer_in: deducted ${quantity} units from destination batch`,
+          }, { session });
+        }
+      }
+
+      // ── Update the transfer status to cancelled ─────────────────────────
+      await transferRepository.updateById(transfer._id, {
+        status: 'cancelled',
+        notes: transfer.notes
+          ? `${transfer.notes} | CANCELLED: ${reason || 'No reason provided'}`
+          : `CANCELLED: ${reason || 'No reason provided'}`,
+      }, session);
+
+      await session.commitTransaction();
+      return transferRepository.findById(transfer._id);
+    } catch (err) {
+      await session.abortTransaction();
+      throw err;
+    } finally {
+      session.endSession();
+    }
+  },
 };
 
 module.exports = transferService;

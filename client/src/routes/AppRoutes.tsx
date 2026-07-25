@@ -22,6 +22,7 @@ import { ReservationsPage } from '../pages/reservations/ReservationsPage';
 import { MealAttendancePage } from '../pages/mealAttendance/MealAttendancePage';
 import { ReportsPage } from '../pages/reports/ReportsPage';
 import { SettingsPage } from '../pages/settings/SettingsPage';
+import { AuditLogPage } from '../pages/auditLog/AuditLogPage';
 import { ProtectedRoute } from './ProtectedRoute';
 
 export function AppRoutes() {
@@ -214,6 +215,16 @@ export function AppRoutes() {
         element={
           <ProtectedRoute requiredPermission="settings:view">
             <SettingsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ── Audit Log (admin only) ── */}
+      <Route
+        path="/audit-log"
+        element={
+          <ProtectedRoute requiredPermission="settings:view">
+            <AuditLogPage />
           </ProtectedRoute>
         }
       />

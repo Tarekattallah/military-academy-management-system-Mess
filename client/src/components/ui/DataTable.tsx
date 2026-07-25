@@ -54,7 +54,7 @@ export function DataTable<TData, TValue>({
   return (
     <div className="space-y-3">
       {searchKey && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2">
           <input
             type="text"
             value={globalFilter ?? ''}
@@ -62,6 +62,9 @@ export function DataTable<TData, TValue>({
             placeholder={searchPlaceholder}
             className="flex h-9 w-full max-w-sm rounded-md border border-input bg-card px-3 py-1 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           />
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            {table.getFilteredRowModel().rows.length} من {data.length} سجل
+          </span>
         </div>
       )}
       <div className="rounded-md border border-border">

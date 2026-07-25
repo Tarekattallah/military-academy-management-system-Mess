@@ -4,7 +4,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Download } from 'lucide-react';
+import { exportToCSV } from '../../lib/csvExport';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -210,12 +211,33 @@ export function WarehousesPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>قائمة المستودعات</CardTitle>
-          {canCreate && (
-            <Button onClick={handleOpenCreate}>
-              <Plus className="size-4" />
-              إضافة مستودع
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                exportToCSV(
+                  warehouses,
+                  [
+                    { header: 'الاسم', accessor: (r) => r.name },
+                    { header: 'الكود', accessor: (r) => r.code || '' },
+                    { header: 'الموقع', accessor: (r) => r.location || '' },
+                    { header: 'الحالة', accessor: (r) => r.isActive ? 'نشط' : 'غير نشط' },
+                  ],
+                  'warehouses'
+                )
+              }
+            >
+              <Download className="size-4" />
+              تصدير
             </Button>
-          )}
+            {canCreate && (
+              <Button onClick={handleOpenCreate}>
+                <Plus className="size-4" />
+                إضافة مستودع
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -225,7 +247,7 @@ export function WarehousesPage() {
               ))}
             </div>
           ) : error ? (
-            <div className="text-center text-destructive py-8">فشل تحميل البيانات</div>
+            <div className="text-center text-destructive py-8 font-medium">فشل تحميل البيانات: {error.message}</div>
           ) : warehouses.length === 0 ? (
             <EmptyState title="لا توجد مستودعات" description="قم بإضافة مستودع جديد للبدء" />
           ) : (

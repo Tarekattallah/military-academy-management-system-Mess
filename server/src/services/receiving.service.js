@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const receivingRepository = require('../repositories/receiving.repository');
 const batchRepository = require('../repositories/batch.repository');
 const inventoryTransactionRepository = require('../repositories/inventoryTransaction.repository');
+const inventoryTransactionService = require('./inventoryTransaction.service');
 const Product = require('../models/product.model');
 const Warehouse = require('../models/warehouse.model');
 const Supplier = require('../models/supplier.model');
@@ -193,6 +194,93 @@ const receivingService = {
     const receiving = await receivingRepository.findById(id);
     if (!receiving) throw new AppError('Receiving document not found', 404);
     return receiving;
+  },
+
+  /**
+   * Cancels (voids) a completed receiving document.
+   *
+   * Workflow:
+   *   1. Validates the receiving exists and is in 'completed' status
+   *   2. For each item:
+   *      a. Decreases the batch availableQuantity
+   *      b. Creates a reverse inventory transaction (type: 'cancellation')
+   *   3. Updates the receiving status to 'cancelled'
+   *   4. All operations in a single MongoDB transaction
+   *
+   * If any item fails, the entire operation rolls back.
+   */
+  async cancel(id, performedBy, reason) {
+    const receiving = await receivingRepository.findById(id);
+    if (!receiving) throw new AppError('Receiving document not found', 404);
+    if (receiving.status !== 'completed') {
+      throw new AppError(`Cannot cancel a receiving with status "${receiving.status}". Only completed receivings can be cancelled.`, 400);
+    }
+
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
+
+      // ── Process each item: reverse batch quantities ──────────────────────
+      for (const item of receiving.items) {
+        const { product, batchNumber, quantity, unitCost: itemUnitCost } = item;
+
+        // Find the batch for this item
+        const batch = await batchRepository.findByIdentifier(product, receiving.warehouse, batchNumber, session);
+        if (!batch) {
+          throw new AppError(`Batch "${batchNumber}" for product "${product}" not found. Cannot cancel receiving.`, 404);
+        }
+
+        // Check if batch has enough available quantity to reverse
+        if (batch.availableQuantity < quantity) {
+          throw new AppError(
+            `Cannot cancel: Batch "${batchNumber}" has only ${batch.availableQuantity} available, but ${quantity} need to be reversed. The batch may have been partially consumed.`,
+            400
+          );
+        }
+
+        // Find the original transaction to get unitCost
+        const originalTransaction = await inventoryTransactionRepository.findOne({
+          referenceType: 'Receiving',
+          referenceId: receiving._id,
+          batch: batch._id,
+          transactionType: 'receiving',
+        }, session);
+
+        const unitCost = originalTransaction?.unitCost || itemUnitCost || 0;
+
+        // ── Create reverse inventory transaction via inventoryTransactionService ──
+        // This handles both the batch quantity update and the transaction record
+        await inventoryTransactionService.create({
+          batch: batch._id,
+          product,
+          warehouse: receiving.warehouse,
+          transactionType: 'cancellation',
+          quantity,
+          unitCost,
+          referenceType: 'Receiving',
+          referenceId: receiving._id,
+          reason: reason || `Cancellation of receiving ${receiving.receivingNumber}`,
+          performedBy,
+          notes: `Reversed ${quantity} units from batch ${batchNumber}`,
+        }, { session });
+      }
+
+      // ── Update the receiving status to cancelled ─────────────────────────
+      await receivingRepository.updateById(receiving._id, {
+        status: 'cancelled',
+        notes: receiving.notes
+          ? `${receiving.notes} | CANCELLED: ${reason || 'No reason provided'}`
+          : `CANCELLED: ${reason || 'No reason provided'}`,
+      }, session);
+
+      await session.commitTransaction();
+      return receivingRepository.findById(receiving._id);
+    } catch (err) {
+      await session.abortTransaction();
+      throw err;
+    } finally {
+      session.endSession();
+    }
   },
 };
 

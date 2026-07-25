@@ -10,7 +10,8 @@ import { SelectField } from '../../components/ui/SelectField';
 import { Badge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { AppLayout } from '../../components/layout/AppLayout';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Download } from 'lucide-react';
+import { exportToCSV } from '../../lib/csvExport';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -231,10 +232,33 @@ export function ProductsPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>قائمة المنتجات</CardTitle>
-          <Button onClick={handleOpenCreate}>
-            <Plus className="size-4" />
-            إضافة منتج
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                exportToCSV(
+                  products,
+                  [
+                    { header: 'الاسم', accessor: (r) => r.name },
+                    { header: 'SKU', accessor: (r) => r.sku || '' },
+                    { header: 'التصنيف', accessor: (r) => typeof r.category === 'object' ? r.category.name : r.category },
+                    { header: 'الوحدة', accessor: (r) => typeof r.unit === 'object' ? r.unit.name : r.unit },
+                    { header: 'السعر', accessor: (r) => r.unitPrice },
+                    { header: 'الحالة', accessor: (r) => r.isActive ? 'نشط' : 'غير نشط' },
+                  ],
+                  'products'
+                )
+              }
+            >
+              <Download className="size-4" />
+              تصدير
+            </Button>
+            <Button onClick={handleOpenCreate}>
+              <Plus className="size-4" />
+              إضافة منتج
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -244,7 +268,7 @@ export function ProductsPage() {
               ))}
             </div>
           ) : error ? (
-            <div className="text-center text-destructive py-8">فشل تحميل البيانات</div>
+            <div className="text-center text-destructive py-8 font-medium">فشل تحميل البيانات: {error.message}</div>
           ) : products.length === 0 ? (
             <EmptyState
               title="لا توجد منتجات"

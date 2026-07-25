@@ -37,4 +37,8 @@ const query = Joi.object({
   endDate: Joi.date().iso().optional(),
 });
 
-module.exports = { create, query };
+const cancel = Joi.object({
+  reason: Joi.string().trim().max(500).optional(),
+});
+
+module.exports = { create, query, cancel };

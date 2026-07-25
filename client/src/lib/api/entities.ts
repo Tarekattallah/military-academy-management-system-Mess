@@ -518,6 +518,11 @@ export async function createReceiving(payload: ReceivingFormValues) {
   return data.data as Receiving;
 }
 
+export async function cancelReceiving(id: string, reason?: string) {
+  const { data } = await api.post(`/receiving/${id}/cancel`, { reason });
+  return data.data as Receiving;
+}
+
 // ── Transfers API ───────────────────────────────────────────────────
 
 export async function getTransfers(query?: TransferQuery) {
@@ -532,6 +537,11 @@ export async function getTransferById(id: string) {
 
 export async function createTransfer(payload: TransferFormValues) {
   const { data } = await api.post('/transfers', payload);
+  return data.data as Transfer;
+}
+
+export async function cancelTransfer(id: string, reason?: string) {
+  const { data } = await api.post(`/transfers/${id}/cancel`, { reason });
   return data.data as Transfer;
 }
 
@@ -552,6 +562,11 @@ export async function createReturn(payload: ReturnFormValues) {
   return data.data as Return;
 }
 
+export async function cancelReturn(id: string, reason?: string) {
+  const { data } = await api.post(`/returns/${id}/cancel`, { reason });
+  return data.data as Return;
+}
+
 // ── Waste API ───────────────────────────────────────────────────────
 
 export async function getWasteRecords(query?: WasteQuery) {
@@ -566,6 +581,11 @@ export async function getWasteById(id: string) {
 
 export async function createWaste(payload: WasteFormValues) {
   const { data } = await api.post('/wastes', payload);
+  return data.data as Waste;
+}
+
+export async function cancelWaste(id: string, reason?: string) {
+  const { data } = await api.post(`/wastes/${id}/cancel`, { reason });
   return data.data as Waste;
 }
 
@@ -591,6 +611,11 @@ export async function approveStockCount(id: string, approvedBy: string) {
   return data.data as StockCount;
 }
 
+export async function cancelStockCount(id: string, reason?: string) {
+  const { data } = await api.post(`/stock-counts/${id}/cancel`, { reason });
+  return data.data as StockCount;
+}
+
 // ── Batches API (full CRUD) ─────────────────────────────────────────
 
 export async function createBatch(payload: BatchFormValues) {
@@ -598,7 +623,7 @@ export async function createBatch(payload: BatchFormValues) {
   return data.data as Batch;
 }
 
-export async function updateBatch(id: string, payload: Partial<BatchFormValues>) {
+export async function updateBatch(id: string, payload: Partial<BatchFormValues> & { status?: string }) {
   const { data } = await api.patch(`/batches/${id}`, payload);
   return data.data as Batch;
 }
@@ -606,4 +631,74 @@ export async function updateBatch(id: string, payload: Partial<BatchFormValues>)
 export async function deleteBatch(id: string) {
   const { data } = await api.delete(`/batches/${id}`);
   return data;
+}
+
+// ── Notifications API ──────────────────────────────────────────────────
+
+export interface Notification {
+  id: string;
+  type: 'error' | 'warning' | 'info';
+  category: 'inventory' | 'stock' | 'meals';
+  title: string;
+  message: string;
+  createdAt: string;
+}
+
+export async function getNotifications() {
+  const { data } = await api.get('/notifications');
+  return data.data as Notification[];
+}
+
+// ── Audit Log API ──────────────────────────────────────────────────────
+
+export interface AuditLogEntry {
+  _id: string;
+  username: string;
+  action: string;
+  module: string;
+  documentId?: string;
+  description?: string;
+  ipAddress?: string;
+  method?: string;
+  path?: string;
+  statusCode?: number;
+  createdAt: string;
+}
+
+export interface AuditLogFilters {
+  page?: number;
+  limit?: number;
+  module?: string;
+  action?: string;
+  username?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export async function getAuditLogs(filters: AuditLogFilters = {}) {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([k, v]) => {
+    if (v !== undefined && v !== '') params.append(k, String(v));
+  });
+  const { data } = await api.get(`/audit-logs?${params.toString()}`);
+  return data as { data: AuditLogEntry[]; pagination: { page: number; limit: number; total: number; totalPages: number } };
+}
+
+// ── Settings API ───────────────────────────────────────────────────────
+
+export interface SystemSettings {
+  _id?: string;
+  appName: string;
+  unitCode: string;
+  language: 'ar' | 'en';
+}
+
+export async function getSystemSettings() {
+  const { data } = await api.get('/settings');
+  return data.data as SystemSettings;
+}
+
+export async function updateSystemSettings(payload: Partial<SystemSettings>) {
+  const { data } = await api.put('/settings', payload);
+  return data.data as SystemSettings;
 }

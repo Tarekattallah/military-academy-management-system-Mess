@@ -10,6 +10,7 @@
     "dev:client": "npm run dev --prefix client",
     "build:client": "npm run build --prefix client",
     "seed": "node server/src/seed.js",
+    "seed:mock": "node server/src/seed.js --with-mock-data",
     "lint:server": "npm run lint --prefix server"
   },
   "devDependencies": {

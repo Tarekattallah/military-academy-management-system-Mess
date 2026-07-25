@@ -277,7 +277,7 @@ export function MealRequestsPage() {
               ))}
             </div>
           ) : error ? (
-            <div className="text-center text-destructive py-8 font-medium">فشل تحميل البيانات</div>
+            <div className="text-center text-destructive py-8 font-medium">فشل تحميل البيانات: {error.message}</div>
           ) : requests.length === 0 ? (
             <EmptyState title="لا توجد طلبات وجبات" description="لم يتم تقديم أي طلبات وجبات حتى الآن" />
           ) : (

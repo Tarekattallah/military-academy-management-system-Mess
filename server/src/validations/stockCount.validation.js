@@ -20,10 +20,14 @@ const approve = Joi.object({
 
 const query = Joi.object({
   warehouse: Joi.string().hex().length(24).optional(),
-  status: Joi.string().valid('draft', 'in_progress', 'completed', 'approved').optional(),
+  status: Joi.string().valid('draft', 'in_progress', 'completed', 'approved', 'cancelled').optional(),
   search: Joi.string().trim().optional(),
   startDate: Joi.date().iso().optional(),
   endDate: Joi.date().iso().optional(),
 });
 
-module.exports = { create, approve, query };
+const cancel = Joi.object({
+  reason: Joi.string().trim().max(500).optional(),
+});
+
+module.exports = { create, approve, query, cancel };

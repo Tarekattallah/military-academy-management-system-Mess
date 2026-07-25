@@ -261,7 +261,7 @@ export function MealAttendancePage() {
               ))}
             </div>
           ) : error ? (
-            <div className="text-center text-destructive py-8 font-medium">فشل تحميل البيانات</div>
+            <div className="text-center text-destructive py-8 font-medium">فشل تحميل البيانات: {error.message}</div>
           ) : distributions.length === 0 ? (
             <EmptyState title="لا توجد عمليات تحضير" description="لم يتم تسجيل أي عمليات تحضير أو توزيع وجبات حتى الآن" />
           ) : (
@@ -324,6 +324,12 @@ export function MealAttendancePage() {
                 <div className="col-span-2">
                   <span className="block text-xs text-muted-foreground font-medium mb-0.5">ملاحظات</span>
                   <p className="text-foreground bg-secondary/35 p-2 rounded-md">{viewTarget.notes}</p>
+                </div>
+              )}
+              {viewTarget.status === 'cancelled' && viewTarget.cancelReason && (
+                <div className="col-span-2">
+                  <span className="block text-xs text-muted-foreground font-medium mb-0.5 text-destructive">سبب الإلغاء</span>
+                  <p className="text-destructive bg-destructive/10 p-2 rounded-md font-medium">{viewTarget.cancelReason}</p>
                 </div>
               )}
             </div>

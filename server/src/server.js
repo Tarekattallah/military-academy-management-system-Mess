@@ -5,9 +5,12 @@ const connectDB = require('./config/db');
 async function start() {
   await connectDB();
 
-  app.listen(env.port, () => {
+  const server = app.listen(env.port, () => {
     console.log(`[server] MMWMS API running on http://localhost:${env.port} (${env.nodeEnv})`);
   });
+
+  const websocket = require('./utils/websocket');
+  websocket.init(server);
 }
 
 start();

@@ -13,5 +13,6 @@ router.post('/', authorize('stock-counts:create'), validate(stockCountValidation
 router.get('/', authorize('stock-counts:view'), validate(stockCountValidation.query, 'query'), stockCountController.list);
 router.get('/:id', authorize('stock-counts:view'), stockCountController.getById);
 router.post('/:id/approve', authorize('stock-counts:approve'), validate(stockCountValidation.approve, 'body'), stockCountController.approve);
+router.post('/:id/cancel', authorize('stock-counts:delete'), validate(stockCountValidation.cancel, 'body'), stockCountController.cancel);
 
 module.exports = router;

@@ -1,13 +1,30 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUiStore } from '../../lib/uiStore';
 import { Button } from '../ui/Button';
-import { Menu, LogOut, PanelLeftClose, PanelLeftOpen, User } from 'lucide-react';
+import { Menu, LogOut, PanelLeftClose, PanelLeftOpen, User, Sun, Moon } from 'lucide-react';
+import { NotificationBell } from './NotificationBell';
 
 export function Header({ title }: { title: string }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { isSidebarCollapsed, toggleSidebar, setMobileSidebarOpen } = useUiStore();
+
+  const [isDark, setIsDark] = useState(() => {
+    return localStorage.getItem('theme') === 'dark' || 
+      (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  });
+
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDark]);
 
   async function handleLogout() {
     await logout();
@@ -55,6 +72,15 @@ export function Header({ title }: { title: string }) {
               <p className="text-xs text-muted-foreground">{user.roles.join(', ') || 'بدون دور'}</p>
             </div>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsDark(!isDark)}
+            title={isDark ? 'تفعيل الوضع المضيء' : 'تفعيل الوضع المظلم'}
+          >
+            {isDark ? <Sun className="size-5 text-warning" /> : <Moon className="size-5" />}
+          </Button>
+          <NotificationBell />
           <Button variant="ghost" size="icon" onClick={handleLogout} title="تسجيل الخروج">
             <LogOut className="size-4" />
           </Button>

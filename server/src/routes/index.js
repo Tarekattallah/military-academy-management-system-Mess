@@ -24,6 +24,9 @@ const reservationRoutes = require('./reservation.routes');
 const mealDistributionRoutes = require('./mealDistribution.routes');
 const reportRoutes = require('./report.routes');
 const dashboardRoutes = require('./dashboard.routes');
+const notificationRoutes = require('./notification.routes');
+const auditLogRoutes = require('./auditLog.routes');
+const settingsRoutes = require('./settings.routes');
 
 const router = express.Router();
 
@@ -55,5 +58,8 @@ router.use('/reservations', reservationRoutes);
 router.use('/meal-distributions', mealDistributionRoutes);
 router.use('/reports', reportRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/notifications', notificationRoutes);
+router.use('/audit-logs', auditLogRoutes);
+router.use('/settings', settingsRoutes);
 
 module.exports = router;

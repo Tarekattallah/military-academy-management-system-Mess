@@ -17,4 +17,9 @@ const list = catchAsync(async (req, res) => {
   res.status(200).json({ success: true, data: returns });
 });
 
-module.exports = { create, getById, list };
+const cancel = catchAsync(async (req, res) => {
+  const returnDoc = await returnService.cancel(req.params.id, req.user.id, req.body.reason);
+  res.status(200).json({ success: true, data: returnDoc });
+});
+
+module.exports = { create, getById, list, cancel };

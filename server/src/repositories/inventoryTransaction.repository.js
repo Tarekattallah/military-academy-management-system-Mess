@@ -22,6 +22,16 @@ const inventoryTransactionRepository = {
       .populate('performedBy', 'displayName')
       .sort({ transactionDate: -1 });
   },
+
+  findOne(filter, session) {
+    const query = InventoryTransaction.findOne(filter)
+      .populate('batch', 'batchNumber')
+      .populate('product', 'name sku')
+      .populate('warehouse', 'name code')
+      .populate('performedBy', 'displayName');
+    if (session) query.session(session);
+    return query.exec();
+  },
 };
 
 module.exports = inventoryTransactionRepository;

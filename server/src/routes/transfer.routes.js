@@ -12,5 +12,6 @@ router.use(authenticate);
 router.post('/', authorize('transfers:create'), validate(transferValidation.create, 'body'), transferController.create);
 router.get('/', authorize('transfers:view'), validate(transferValidation.query, 'query'), transferController.list);
 router.get('/:id', authorize('transfers:view'), transferController.getById);
+router.post('/:id/cancel', authorize('transfers:delete'), validate(transferValidation.cancel, 'body'), transferController.cancel);
 
 module.exports = router;

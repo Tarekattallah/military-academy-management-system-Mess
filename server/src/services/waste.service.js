@@ -186,6 +186,66 @@ const wasteService = {
     if (!waste) throw new AppError('Waste document not found', 404);
     return waste;
   },
+
+  /**
+   * Cancels (voids) a completed waste document.
+   *
+   * Workflow:
+   *   1. Validates the waste exists and is in 'completed' status
+   *   2. For each item:
+   *      a. Creates a cancellation transaction that adds quantity back to the batch
+   *   3. Updates the waste status to 'cancelled'
+   *   4. All operations in a single MongoDB transaction
+   */
+  async cancel(id, performedBy, reason) {
+    const waste = await wasteRepository.findById(id);
+    if (!waste) throw new AppError('Waste document not found', 404);
+    if (waste.status !== 'completed') {
+      throw new AppError(`Cannot cancel a waste record with status "${waste.status}". Only completed waste records can be cancelled.`, 400);
+    }
+
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
+
+      for (const item of waste.items) {
+        const { product, batch: batchId, quantity } = item;
+
+        // ── Create a reversal transaction that adds quantity back ──────────
+        // Waste is a deduction (waste: -1 direction), so we need a reversal
+        // transaction (reversal: +1 direction) to add the quantity back
+        await inventoryTransactionService.create({
+          batch: batchId,
+          product,
+          warehouse: waste.warehouse,
+          transactionType: 'reversal',
+          quantity,
+          unitCost: 0,
+          referenceType: 'Waste',
+          referenceId: waste._id,
+          reason: reason || `Cancellation of waste ${waste.wasteNumber} (reverse waste)`,
+          performedBy,
+          notes: `Reversed waste: added ${quantity} units back to batch`,
+        }, { session });
+      }
+
+      // ── Update the waste status to cancelled ────────────────────────────
+      await wasteRepository.updateById(waste._id, {
+        status: 'cancelled',
+        notes: waste.notes
+          ? `${waste.notes} | CANCELLED: ${reason || 'No reason provided'}`
+          : `CANCELLED: ${reason || 'No reason provided'}`,
+      }, session);
+
+      await session.commitTransaction();
+      return wasteRepository.findById(waste._id);
+    } catch (err) {
+      await session.abortTransaction();
+      throw err;
+    } finally {
+      session.endSession();
+    }
+  },
 };
 
 module.exports = wasteService;

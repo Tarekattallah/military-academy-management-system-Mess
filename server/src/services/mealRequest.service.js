@@ -12,6 +12,15 @@ const VALID_TRANSITIONS = {
   completed: [],
 };
 
+function broadcastMealRequestUpdate() {
+  try {
+    const websocket = require('../utils/websocket');
+    websocket.broadcast('notifications_update', { type: 'meal-request' });
+  } catch (e) {
+    console.error('[websocket] Broadcast failed:', e.message);
+  }
+}
+
 const mealRequestService = {
   /**
    * Creates a Meal Request.
@@ -40,7 +49,9 @@ const mealRequestService = {
     const count = await MealRequest.countDocuments();
     const requestNumber = `MRQ-${datePart}-${String(count + 1).padStart(4, '0')}`;
 
-    return mealRequestRepository.create({ ...data, requestNumber, requestedBy });
+    const result = await mealRequestRepository.create({ ...data, requestNumber, requestedBy });
+    broadcastMealRequestUpdate();
+    return result;
   },
 
   /**
@@ -82,6 +93,7 @@ const mealRequestService = {
 
     const updated = await mealRequestRepository.updateById(id, data);
     if (!updated) throw new AppError('Meal request not found', 404);
+    broadcastMealRequestUpdate();
     return updated;
   },
 
@@ -113,6 +125,7 @@ const mealRequestService = {
       approvedAt: new Date(),
     });
     if (!updated) throw new AppError('Meal request not found', 404);
+    broadcastMealRequestUpdate();
     return updated;
   },
 
@@ -139,6 +152,7 @@ const mealRequestService = {
       notes: reason ? `${request.notes || ''} [Rejected: ${reason}]`.trim() : request.notes,
     });
     if (!updated) throw new AppError('Meal request not found', 404);
+    broadcastMealRequestUpdate();
     return updated;
   },
 
@@ -159,6 +173,7 @@ const mealRequestService = {
 
     const updated = await mealRequestRepository.updateById(id, { status: newStatus });
     if (!updated) throw new AppError('Meal request not found', 404);
+    broadcastMealRequestUpdate();
     return updated;
   },
 

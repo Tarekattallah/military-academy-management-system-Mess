@@ -214,6 +214,97 @@ const stockCountService = {
     if (!stockCount) throw new AppError('Stock count not found', 404);
     return stockCount;
   },
+
+  /**
+   * Cancels (voids) a stock count document.
+   *
+   * Workflow:
+   *   1. Validates the stock count exists
+   *   2. If status is 'approved', reverses all adjustments by creating
+   *      cancellation transactions (reverse of the original adjustments)
+   *   3. If status is 'draft' or 'completed', no inventory reversal needed
+   *      because no inventory changes were made yet
+   *   4. Updates the stock count status to 'cancelled'
+   *   5. All operations in a single MongoDB transaction
+   */
+  async cancel(id, performedBy, reason) {
+    const stockCount = await stockCountRepository.findById(id);
+    if (!stockCount) throw new AppError('Stock count not found', 404);
+    if (stockCount.status === 'cancelled') {
+      throw new AppError('Stock count is already cancelled', 400);
+    }
+
+    if (stockCount.status === 'approved') {
+      // ── Approved stock counts need inventory reversal ──────────────────
+      const session = await mongoose.startSession();
+      try {
+        session.startTransaction();
+
+        // Reverse each adjustment
+        for (const item of stockCount.items) {
+          if (item.difference === 0) continue;
+
+          const { product: productId, batch: batchId, systemQuantity, physicalQuantity } = item;
+
+          const warehouseId = stockCount.warehouse._id
+            ? stockCount.warehouse._id.toString()
+            : stockCount.warehouse.toString();
+
+          // Create a reversal adjustment (set quantity back to systemQuantity)
+          // Using the 'adjustment' type with currentQuantity = physicalQuantity
+          await inventoryTransactionService.create(
+            {
+              batch: batchId,
+              product: productId,
+              warehouse: warehouseId,
+              transactionType: 'adjustment',
+              quantity: systemQuantity,
+              unitCost: 0,
+              referenceType: 'StockCount',
+              referenceId: stockCount._id,
+              reason: reason || `Cancellation of stock count ${stockCount.countNumber} (reverse adjustment)`,
+              performedBy,
+              notes: `Reversed stock count adjustment: restored ${systemQuantity} units`,
+              currentQuantity: physicalQuantity,
+            },
+            { session }
+          );
+        }
+
+        // Update status to cancelled
+        await stockCountRepository.updateById(
+          stockCount._id,
+          {
+            status: 'cancelled',
+            approvedBy: undefined,
+            approvedAt: undefined,
+            notes: stockCount.notes
+              ? `${stockCount.notes} | CANCELLED: ${reason || 'No reason provided'}`
+              : `CANCELLED: ${reason || 'No reason provided'}`,
+          },
+          session
+        );
+
+        await session.commitTransaction();
+        return stockCountRepository.findById(stockCount._id);
+      } catch (err) {
+        await session.abortTransaction();
+        throw err;
+      } finally {
+        session.endSession();
+      }
+    }
+
+    // ── Draft or completed stock counts: no inventory reversal needed ────
+    await stockCountRepository.updateById(stockCount._id, {
+      status: 'cancelled',
+      notes: stockCount.notes
+        ? `${stockCount.notes} | CANCELLED: ${reason || 'No reason provided'}`
+        : `CANCELLED: ${reason || 'No reason provided'}`,
+    });
+
+    return stockCountRepository.findById(stockCount._id);
+  },
 };
 
 module.exports = stockCountService;

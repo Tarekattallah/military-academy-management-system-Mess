@@ -1,0 +1,52 @@
+@media print {
+  /* Hide layout chrome when printing */
+  [data-sidebar],
+  nav,
+  aside,
+  header,
+  .print-hide,
+  button,
+  [role="toolbar"] {
+    display: none !important;
+  }
+
+  /* Full width for main content */
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+  }
+
+  .card,
+  [class*="Card"] {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    border: 1px solid #ddd !important;
+    padding: 6px 8px !important;
+    font-size: 10pt;
+  }
+
+  /* Show print date/time */
+  .print-footer::after {
+    content: "طُبع بتاريخ: " attr(data-date);
+    display: block;
+    text-align: center;
+    font-size: 9pt;
+    color: #666;
+    margin-top: 20px;
+  }
+}

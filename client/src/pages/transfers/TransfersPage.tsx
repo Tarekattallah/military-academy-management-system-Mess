@@ -4,7 +4,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { Plus, Eye, Trash2, ArrowLeftRight } from 'lucide-react';
+import { Plus, Eye, Trash2, ArrowLeftRight, XCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { AppLayout } from '../../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
@@ -20,6 +20,7 @@ import {
   getTransfers,
   getTransferById,
   createTransfer,
+  cancelTransfer,
   getWarehouses,
   getAllProducts,
   getBatches,
@@ -75,11 +76,14 @@ export function TransfersPage() {
   const { user, hasPermission } = useAuth();
   const [open, setOpen] = useState(false);
   const [viewTarget, setViewTarget] = useState<Transfer | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<Transfer | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
   const [selectedSource, setSelectedSource] = useState('');
   const [selectedDest, setSelectedDest] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
 
   const canCreate = hasPermission('transfers:create');
+  const canDelete = hasPermission('transfers:delete');
 
   const { data: transfers = [], isLoading, error } = useQuery({
     queryKey: ['transfers'],
@@ -115,6 +119,17 @@ export function TransfersPage() {
       toast.success('تم إنشاء التحويل بنجاح');
     },
     onError: (err: Error) => toast.error(err.message || 'فشل إنشاء التحويل'),
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) => cancelTransfer(id, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transfers'] });
+      setCancelTarget(null);
+      setCancelReason('');
+      toast.success('تم إلغاء التحويل بنجاح');
+    },
+    onError: (err: Error) => toast.error(err.message || 'فشل إلغاء التحويل'),
   });
 
   const {
@@ -220,6 +235,17 @@ export function TransfersPage() {
           <Button variant="ghost" size="icon" onClick={() => handleView(row.original._id)} title="عرض">
             <Eye className="size-4" />
           </Button>
+          {canDelete && row.original.status === 'completed' && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setCancelTarget(row.original)}
+              title="إلغاء"
+              className="text-destructive hover:text-destructive"
+            >
+              <XCircle className="size-4" />
+            </Button>
+          )}
         </div>
       ),
     },
@@ -279,7 +305,7 @@ export function TransfersPage() {
               ))}
             </div>
           ) : error ? (
-            <div className="text-center text-destructive py-8">فشل تحميل البيانات</div>
+            <div className="text-center text-destructive py-8 font-medium">فشل تحميل البيانات: {error.message}</div>
           ) : filteredTransfers.length === 0 ? (
             <EmptyState
               title="لا توجد تحويلات"
@@ -470,6 +496,66 @@ export function TransfersPage() {
             </div>
           </div>
         )}
+      </Dialog>
+
+      {/* Cancel Confirmation Dialog */}
+      <Dialog
+        open={!!cancelTarget}
+        onOpenChange={(v) => { if (!v) { setCancelTarget(null); setCancelReason(''); } }}
+        title="إلغاء التحويل"
+        description={cancelTarget ? `هل أنت متأكد من إلغاء التحويل ${cancelTarget.transferNumber}؟` : ''}
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => { setCancelTarget(null); setCancelReason(''); }} disabled={cancelMutation.isPending}>
+              تراجع
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (cancelTarget) {
+                  cancelMutation.mutate({ id: cancelTarget._id, reason: cancelReason || undefined });
+                }
+              }}
+              isLoading={cancelMutation.isPending}
+            >
+              تأكيد الإلغاء
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <p className="font-medium">تحذير: هذا الإجراء لا يمكن التراجع عنه</p>
+            <p className="mt-1 text-xs">سيتم عكس جميع حركات المخزون المرتبطة بهذا التحويل.</p>
+          </div>
+          {cancelTarget && (
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">رقم التحويل:</span>
+                <span className="font-mono">{cancelTarget.transferNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">من:</span>
+                <span>{cancelTarget.sourceWarehouse.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">إلى:</span>
+                <span>{cancelTarget.destinationWarehouse.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">البنود:</span>
+                <span>{cancelTarget.items.length}</span>
+              </div>
+            </div>
+          )}
+          <FormField label="سبب الإلغاء (اختياري)">
+            <Input
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="ذكر سبب الإلغاء..."
+            />
+          </FormField>
+        </div>
       </Dialog>
     </AppLayout>
   );

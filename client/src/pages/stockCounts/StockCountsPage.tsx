@@ -4,7 +4,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { Plus, Eye, Trash2, ArrowLeftRight, CheckCircle } from 'lucide-react';
+import { Plus, Eye, Trash2, ArrowLeftRight, CheckCircle, XCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { AppLayout } from '../../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
@@ -21,6 +21,7 @@ import {
   getStockCountById,
   createStockCount,
   approveStockCount,
+  cancelStockCount,
   getWarehouses,
   getAllProducts,
   getBatches,
@@ -32,13 +33,15 @@ const STATUS_LABELS: Record<StockCountStatus, string> = {
   in_progress: 'قيد التنفيذ',
   completed: 'مكتمل',
   approved: 'معتمد',
+  cancelled: 'ملغي',
 };
 
-const STATUS_VARIANTS: Record<StockCountStatus, 'secondary' | 'warning' | 'success' | 'default'> = {
+const STATUS_VARIANTS: Record<StockCountStatus, 'secondary' | 'warning' | 'success' | 'default' | 'destructive'> = {
   draft: 'secondary',
   in_progress: 'warning',
   completed: 'success',
   approved: 'default',
+  cancelled: 'destructive',
 };
 
 const itemSchema = z.object({
@@ -71,11 +74,14 @@ export function StockCountsPage() {
   const { user, hasPermission } = useAuth();
   const [open, setOpen] = useState(false);
   const [viewTarget, setViewTarget] = useState<StockCount | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<StockCount | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
   const [selectedWarehouse, setSelectedWarehouse] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
 
   const canCreate = hasPermission('stock-counts:create');
   const canApprove = hasPermission('stock-counts:approve');
+  const canDelete = hasPermission('stock-counts:delete');
 
   const { data: stockCounts = [], isLoading, error } = useQuery({
     queryKey: ['stockCounts'],
@@ -124,6 +130,17 @@ export function StockCountsPage() {
       toast.success('تم اعتماد الجرد بنجاح');
     },
     onError: (err: Error) => toast.error(err.message || 'فشل اعتماد الجرد'),
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) => cancelStockCount(id, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['stockCounts'] });
+      setCancelTarget(null);
+      setCancelReason('');
+      toast.success('تم إلغاء الجرد بنجاح');
+    },
+    onError: (err: Error) => toast.error(err.message || 'فشل إلغاء الجرد'),
   });
 
   const {
@@ -182,6 +199,11 @@ export function StockCountsPage() {
             <CheckCircle className="size-4 text-green-600" />
           </Button>
         )}
+        {canDelete && (row.original.status === 'completed' || row.original.status === 'approved') && (
+          <Button variant="ghost" size="icon" onClick={() => setCancelTarget(row.original)} title="إلغاء" className="text-destructive hover:text-destructive">
+            <XCircle className="size-4" />
+          </Button>
+        )}
       </div>
     )},
   ];
@@ -205,13 +227,14 @@ export function StockCountsPage() {
               <option value="in_progress">قيد التنفيذ</option>
               <option value="completed">مكتمل</option>
               <option value="approved">معتمد</option>
+              <option value="cancelled">ملغي</option>
             </select>
           </div>
 
           {isLoading ? (
             <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-10 animate-pulse rounded-md bg-secondary" />)}</div>
           ) : error ? (
-            <div className="text-center text-destructive py-8">فشل تحميل البيانات</div>
+            <div className="text-center text-destructive py-8 font-medium">فشل تحميل البيانات: {error.message}</div>
           ) : filtered.length === 0 ? (
             <EmptyState title="لا توجد جرد" description="قم بإضافة جرد جديد للبدء" />
           ) : (
@@ -313,6 +336,66 @@ export function StockCountsPage() {
             </div>
           </div>
         )}
+      </Dialog>
+
+      {/* Cancel Confirmation Dialog */}
+      <Dialog
+        open={!!cancelTarget}
+        onOpenChange={(v) => { if (!v) { setCancelTarget(null); setCancelReason(''); } }}
+        title="إلغاء الجرد"
+        description={cancelTarget ? `هل أنت متأكد من إلغاء الجرد ${cancelTarget.countNumber}؟` : ''}
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => { setCancelTarget(null); setCancelReason(''); }} disabled={cancelMutation.isPending}>
+              تراجع
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (cancelTarget) {
+                  cancelMutation.mutate({ id: cancelTarget._id, reason: cancelReason || undefined });
+                }
+              }}
+              isLoading={cancelMutation.isPending}
+            >
+              تأكيد الإلغاء
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <p className="font-medium">تحذير: هذا الإجراء لا يمكن التراجع عنه</p>
+            <p className="mt-1 text-xs">سيتم عكس جميع تعديلات المخزون المرتبطة بهذا الجرد.</p>
+          </div>
+          {cancelTarget && (
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">رقم الجرد:</span>
+                <span className="font-mono">{cancelTarget.countNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">المستودع:</span>
+                <span>{cancelTarget.warehouse.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">الحالة:</span>
+                <span>{STATUS_LABELS[cancelTarget.status]}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">البنود:</span>
+                <span>{cancelTarget.items.length}</span>
+              </div>
+            </div>
+          )}
+          <FormField label="سبب الإلغاء (اختياري)">
+            <Input
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="ذكر سبب الإلغاء..."
+            />
+          </FormField>
+        </div>
       </Dialog>
     </AppLayout>
   );

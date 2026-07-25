@@ -364,41 +364,70 @@ const dashboardRepository = {
       {
         $lookup: {
           from: 'currentstocks',
-          localField: '_id',
-          foreignField: 'warehouse',
+          let: { warehouseId: '$_id' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$warehouse', '$$warehouseId'] } } },
+            {
+              $lookup: {
+                from: 'products',
+                localField: 'product',
+                foreignField: '_id',
+                as: 'productInfo',
+              },
+            },
+            { $unwind: '$productInfo' },
+          ],
           as: 'stocks',
-        },
-      },
-      {
-        $lookup: {
-          from: 'batches',
-          localField: '_id',
-          foreignField: 'warehouse',
-          as: 'batches',
-        },
-      },
-      {
-        $lookup: {
-          from: 'reservations',
-          localField: '_id',
-          foreignField: 'warehouse',
-          as: 'reservations',
         },
       },
       {
         $project: {
           _id: 1,
-          warehouseName: '$name',
-          warehouseCode: '$code',
-          productCount: { $size: { $ifNull: ['$stocks', []] } },
-          batchCount: { $size: { $ifNull: ['$batches', []] } },
-          currentStock: {
-            $sum: { $ifNull: ['$stocks.availableQuantity', 0] },
+          name: '$name',
+          totalProducts: { $size: { $ifNull: ['$stocks', []] } },
+          totalQuantity: { $sum: { $ifNull: ['$stocks.availableQuantity', 0] } },
+          totalValue: {
+            $sum: {
+              $map: {
+                input: { $ifNull: ['$stocks', []] },
+                as: 's',
+                in: {
+                  $multiply: [
+                    { $ifNull: ['$$s.availableQuantity', 0] },
+                    { $ifNull: ['$$s.weightedAverageCost', 0] },
+                  ],
+                },
+              },
+            },
           },
-          reservationCount: { $size: { $ifNull: ['$reservations', []] } },
+          lowStockItems: {
+            $sum: {
+              $map: {
+                input: { $ifNull: ['$stocks', []] },
+                as: 's',
+                in: {
+                  $cond: [
+                    {
+                      $and: [
+                        { $gt: ['$$s.availableQuantity', 0] },
+                        {
+                          $lt: [
+                            '$$s.availableQuantity',
+                            { $ifNull: ['$$s.productInfo.minStockLevel', 0] },
+                          ],
+                        },
+                      ],
+                    },
+                    1,
+                    0,
+                  ],
+                },
+              },
+            },
+          },
         },
       },
-      { $sort: { warehouseName: 1 } },
+      { $sort: { name: 1 } },
     ]);
   },
 };

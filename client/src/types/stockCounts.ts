@@ -1,4 +1,4 @@
-export type StockCountStatus = 'draft' | 'in_progress' | 'completed' | 'approved';
+export type StockCountStatus = 'draft' | 'in_progress' | 'completed' | 'approved' | 'cancelled';
 
 export interface StockCountItem {
   product: { _id: string; name: string; sku: string };

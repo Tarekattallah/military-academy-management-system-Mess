@@ -18,6 +18,8 @@ const TRANSACTION_DIRECTION = {
   issue: -1,
   reservation: 0, // reservation changes reservedQuantity, not availableQuantity
   reservation_cancel: 0, // cancels reservation, changes reservedQuantity
+  cancellation: -1, // reversal: subtracts the quantity (reverse of inbound transactions)
+  reversal: 1, // adds back quantity (reverse of outbound transactions like waste, return_to_supplier)
 };
 
 // Map transaction types to their source modules for audit
@@ -32,6 +34,8 @@ const TRANSACTION_TYPE_TO_MODULE = {
   issue: 'meal-issue',
   reservation: 'meal-issue',
   reservation_cancel: 'meal-issue',
+  cancellation: 'manual',
+  reversal: 'manual',
 };
 
 // ── Internal: Update batch quantity (only called by this service) ───────
@@ -224,7 +228,16 @@ const inventoryTransactionService = {
       }
     }
 
-    return run();
+    const result = await run();
+
+    try {
+      const websocket = require('../utils/websocket');
+      websocket.broadcast('notifications_update', { type: 'inventory' });
+    } catch (e) {
+      console.error('[websocket] Broadcast failed:', e.message);
+    }
+
+    return result;
   },
 
   /**

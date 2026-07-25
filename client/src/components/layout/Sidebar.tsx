@@ -25,6 +25,7 @@ import {
   BarChart3,
   Settings,
   User,
+  ScrollText,
 } from 'lucide-react';
 
 interface NavItem {
@@ -57,6 +58,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { to: '/reservations', label: 'الحجوزات', icon: CalendarCheck, permission: 'reservations:view' },
   { to: '/reports', label: 'التقارير', icon: BarChart3, permission: 'reports:view' },
   { to: '/settings', label: 'الإعدادات', icon: Settings, permission: 'settings:view' },
+  { to: '/audit-log', label: 'سجل النشاطات', icon: ScrollText, permission: 'settings:view' },
 ];
 
 export function Sidebar() {

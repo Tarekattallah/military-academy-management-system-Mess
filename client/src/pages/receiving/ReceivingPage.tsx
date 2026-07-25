@@ -20,6 +20,7 @@ import {
   getReceivings,
   getReceivingById,
   createReceiving,
+  cancelReceiving,
   getSuppliers,
   getWarehouses,
   getAllProducts,
@@ -79,11 +80,14 @@ export function ReceivingPage() {
   const { user, hasPermission } = useAuth();
   const [open, setOpen] = useState(false);
   const [viewTarget, setViewTarget] = useState<Receiving | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<Receiving | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
   const [selectedSupplier, setSelectedSupplier] = useState('');
   const [selectedWarehouse, setSelectedWarehouse] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
 
   const canCreate = hasPermission('receiving:create');
+  const canDelete = hasPermission('receiving:delete');
 
   const { data: receivings = [], isLoading, error } = useQuery({
     queryKey: ['receivings'],
@@ -118,6 +122,20 @@ export function ReceivingPage() {
       toast.success('تم إنشاء استلام البضائع بنجاح');
     },
     onError: (err: Error) => toast.error(err.message || 'فشل إنشاء استلام البضائع'),
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) => {
+      if (!user) throw new Error('User not authenticated');
+      return cancelReceiving(id, reason);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['receivings'] });
+      setCancelTarget(null);
+      setCancelReason('');
+      toast.success('تم إلغاء استلام البضائع بنجاح');
+    },
+    onError: (err: Error) => toast.error(err.message || 'فشل إلغاء استلام البضائع'),
   });
 
   const {
@@ -214,6 +232,16 @@ export function ReceivingPage() {
           <Button variant="ghost" size="icon" onClick={() => handleView(row.original._id)} title="عرض">
             <Eye className="size-4" />
           </Button>
+          {canDelete && row.original.status === 'completed' && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => { setCancelTarget(row.original); setCancelReason(''); }}
+              title="إلغاء الاستلام"
+            >
+              <svg className="size-4 text-destructive" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+            </Button>
+          )}
         </div>
       ),
     },
@@ -273,7 +301,7 @@ export function ReceivingPage() {
               ))}
             </div>
           ) : error ? (
-            <div className="text-center text-destructive py-8">فشل تحميل البيانات</div>
+            <div className="text-center text-destructive py-8 font-medium">فشل تحميل البيانات: {error.message}</div>
           ) : filteredReceivings.length === 0 ? (
             <EmptyState
               title="لا توجد استلامات"
@@ -465,6 +493,70 @@ export function ReceivingPage() {
                 ))}
               </div>
             </div>
+          </div>
+        )}
+      </Dialog>
+
+      {/* Cancel Dialog */}
+      <Dialog
+        open={!!cancelTarget}
+        onOpenChange={(v) => !v && setCancelTarget(null)}
+        title="إلغاء استلام البضائع"
+        description={cancelTarget ? `إلغاء استلام رقم: ${cancelTarget.receivingNumber}` : ''}
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setCancelTarget(null)} disabled={cancelMutation.isPending}>
+              تراجع
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => cancelTarget && cancelMutation.mutate({ id: cancelTarget._id, reason: cancelReason || undefined })}
+              isLoading={cancelMutation.isPending}
+            >
+              تأكيد الإلغاء
+            </Button>
+          </div>
+        }
+      >
+        {cancelTarget && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p className="text-xs text-muted-foreground">رقم الاستلام</p>
+                <p className="font-mono font-medium">{cancelTarget.receivingNumber}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">المورد</p>
+                <p className="font-medium">{cancelTarget.supplier.name}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">المستودع</p>
+                <p className="font-medium">{cancelTarget.warehouse.name}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">البنود</p>
+                <p className="font-mono font-medium">{cancelTarget.items.length}</p>
+              </div>
+            </div>
+
+            <div className="rounded-md bg-destructive/10 p-3 text-xs text-destructive">
+              <p className="font-semibold mb-1">تحذير: إجراء لا يمكن التراجع عنه</p>
+              <p>سيؤدي إلغاء الاستلام إلى:</p>
+              <ul className="list-disc list-inside mt-1 space-y-0.5">
+                <li>إنقاص الكميات من الدُفعات المرتبطة</li>
+                <li>تسجيل حركة مخزنية عكسية (إلغاء)</li>
+                <li>تغيير حالة الاستلام إلى "ملغي"</li>
+              </ul>
+            </div>
+
+            <FormField label="سبب الإلغاء (اختياري)">
+              <textarea
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="أدخل سبب الإلغاء..."
+                className="flex min-h-[80px] w-full rounded-md border border-input bg-card px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </FormField>
           </div>
         )}
       </Dialog>

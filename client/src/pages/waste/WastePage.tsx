@@ -4,7 +4,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { Plus, Eye, Trash2, ArrowLeftRight } from 'lucide-react';
+import { Plus, Eye, Trash2, ArrowLeftRight, XCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { AppLayout } from '../../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
@@ -20,6 +20,7 @@ import {
   getWasteRecords,
   getWasteById,
   createWaste,
+  cancelWaste,
   getWarehouses,
   getAllProducts,
   getBatches,
@@ -69,10 +70,13 @@ export function WastePage() {
   const { user, hasPermission } = useAuth();
   const [open, setOpen] = useState(false);
   const [viewTarget, setViewTarget] = useState<Waste | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<Waste | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
   const [selectedWarehouse, setSelectedWarehouse] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
 
   const canCreate = hasPermission('wastes:create');
+  const canDelete = hasPermission('wastes:delete');
 
   const { data: wastes = [], isLoading, error } = useQuery({
     queryKey: ['wastes'],
@@ -108,6 +112,17 @@ export function WastePage() {
       toast.success('تم إنشاء سجل الهالك بنجاح');
     },
     onError: (err: Error) => toast.error(err.message || 'فشل إنشاء سجل الهالك'),
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) => cancelWaste(id, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wastes'] });
+      setCancelTarget(null);
+      setCancelReason('');
+      toast.success('تم إلغاء سجل الهالك بنجاح');
+    },
+    onError: (err: Error) => toast.error(err.message || 'فشل إلغاء سجل الهالك'),
   });
 
   const {
@@ -158,6 +173,11 @@ export function WastePage() {
     { id: 'actions', header: 'إجراءات', cell: ({ row }: { row: { original: Waste } }) => (
       <div className="flex items-center gap-1">
         <Button variant="ghost" size="icon" onClick={() => handleView(row.original._id)} title="عرض"><Eye className="size-4" /></Button>
+        {canDelete && row.original.status === 'completed' && (
+          <Button variant="ghost" size="icon" onClick={() => setCancelTarget(row.original)} title="إلغاء" className="text-destructive hover:text-destructive">
+            <XCircle className="size-4" />
+          </Button>
+        )}
       </div>
     )},
   ];
@@ -186,7 +206,7 @@ export function WastePage() {
           {isLoading ? (
             <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-10 animate-pulse rounded-md bg-secondary" />)}</div>
           ) : error ? (
-            <div className="text-center text-destructive py-8">فشل تحميل البيانات</div>
+            <div className="text-center text-destructive py-8 font-medium">فشل تحميل البيانات: {error.message}</div>
           ) : filteredWastes.length === 0 ? (
             <EmptyState title="لا توجد سجلات هالك" description="قم بتسجيل هالك جديد للبدء" />
           ) : (
@@ -279,6 +299,66 @@ export function WastePage() {
             </div>
           </div>
         )}
+      </Dialog>
+
+      {/* Cancel Confirmation Dialog */}
+      <Dialog
+        open={!!cancelTarget}
+        onOpenChange={(v) => { if (!v) { setCancelTarget(null); setCancelReason(''); } }}
+        title="إلغاء سجل الهالك"
+        description={cancelTarget ? `هل أنت متأكد من إلغاء سجل الهالك ${cancelTarget.wasteNumber}؟` : ''}
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => { setCancelTarget(null); setCancelReason(''); }} disabled={cancelMutation.isPending}>
+              تراجع
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (cancelTarget) {
+                  cancelMutation.mutate({ id: cancelTarget._id, reason: cancelReason || undefined });
+                }
+              }}
+              isLoading={cancelMutation.isPending}
+            >
+              تأكيد الإلغاء
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <p className="font-medium">تحذير: هذا الإجراء لا يمكن التراجع عنه</p>
+            <p className="mt-1 text-xs">سيتم إعادة الكمية إلى المخزون.</p>
+          </div>
+          {cancelTarget && (
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">رقم السجل:</span>
+                <span className="font-mono">{cancelTarget.wasteNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">المستودع:</span>
+                <span>{cancelTarget.warehouse.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">السبب:</span>
+                <span>{cancelTarget.reason}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">البنود:</span>
+                <span>{cancelTarget.items.length}</span>
+              </div>
+            </div>
+          )}
+          <FormField label="سبب الإلغاء (اختياري)">
+            <Input
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="ذكر سبب الإلغاء..."
+            />
+          </FormField>
+        </div>
       </Dialog>
     </AppLayout>
   );

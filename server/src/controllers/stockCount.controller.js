@@ -22,4 +22,9 @@ const approve = catchAsync(async (req, res) => {
   res.status(200).json({ success: true, data: stockCount });
 });
 
-module.exports = { create, getById, list, approve };
+const cancel = catchAsync(async (req, res) => {
+  const stockCount = await stockCountService.cancel(req.params.id, req.user.id, req.body.reason);
+  res.status(200).json({ success: true, data: stockCount });
+});
+
+module.exports = { create, getById, list, approve, cancel };

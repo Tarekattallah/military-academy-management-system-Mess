@@ -12,5 +12,6 @@ router.use(authenticate);
 router.post('/', authorize('returns:create'), validate(returnValidation.create, 'body'), returnController.create);
 router.get('/', authorize('returns:view'), validate(returnValidation.query, 'query'), returnController.list);
 router.get('/:id', authorize('returns:view'), returnController.getById);
+router.post('/:id/cancel', authorize('returns:delete'), validate(returnValidation.cancel, 'body'), returnController.cancel);
 
 module.exports = router;

@@ -31,6 +31,7 @@ const inventoryTransactionSchema = new mongoose.Schema(
         'issue',
         'reservation',
         'reservation_cancel',
+        'cancellation',
       ],
     },
     module: {

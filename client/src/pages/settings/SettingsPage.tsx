@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Settings, ShieldAlert, User, Cpu, Database, RefreshCcw } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
@@ -8,17 +8,46 @@ import { FormField } from '../../components/ui/FormField';
 import { Input } from '../../components/ui/Input';
 import { AppLayout } from '../../components/layout/AppLayout';
 import { useAuth } from '../../contexts/AuthContext';
+import { getSystemSettings, updateSystemSettings } from '../../lib/api/entities';
 
 export function SettingsPage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ['system-settings'],
+    queryFn: getSystemSettings,
+  });
+
   const [appName, setAppName] = useState('نظام إدارة المستودعات والتموين العسكري (MMWMS)');
   const [unitCode, setUnitCode] = useState('SEC-MIL-HQ-01');
   const [language, setLanguage] = useState('ar');
 
+  useEffect(() => {
+    if (settings) {
+      setAppName(settings.appName);
+      setUnitCode(settings.unitCode);
+      setLanguage(settings.language);
+    }
+  }, [settings]);
+
+  const updateMutation = useMutation({
+    mutationFn: updateSystemSettings,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['system-settings'] });
+      localStorage.setItem('mmwms_app_name', data.appName);
+      localStorage.setItem('mmwms_unit_code', data.unitCode);
+      localStorage.setItem('mmwms_language', data.language);
+      toast.success('تم حفظ إعدادات النظام العامة بنجاح');
+    },
+    onError: (err: any) => {
+      toast.error(err.message || 'فشل حفظ الإعدادات');
+    },
+  });
+
   function handleSaveGeneral(e: React.FormEvent) {
     e.preventDefault();
-    toast.success('تم حفظ إعدادات النظام العامة بنجاح');
+    updateMutation.mutate({ appName, unitCode, language: language as 'ar' | 'en' });
   }
 
   function handleClearCache() {
@@ -40,17 +69,18 @@ export function SettingsPage() {
           <CardContent>
             <form onSubmit={handleSaveGeneral} className="space-y-4">
               <FormField label="اسم النظام / التطبيق">
-                <Input value={appName} onChange={(e) => setAppName(e.target.value)} />
+                <Input value={appName} onChange={(e) => setAppName(e.target.value)} disabled={isLoading || updateMutation.isPending} />
               </FormField>
 
               <FormField label="رمز الجهة العسكرية / الوحدة الرئيسية">
-                <Input value={unitCode} onChange={(e) => setUnitCode(e.target.value)} />
+                <Input value={unitCode} onChange={(e) => setUnitCode(e.target.value)} disabled={isLoading || updateMutation.isPending} />
               </FormField>
 
               <FormField label="لغة واجهة المستخدم">
                 <select
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
+                  disabled={isLoading || updateMutation.isPending}
                   className="flex h-9 w-full rounded-md border border-input bg-card px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   <option value="ar">العربية (الأصلية)</option>
@@ -59,7 +89,7 @@ export function SettingsPage() {
               </FormField>
 
               <div className="flex justify-end pt-2">
-                <Button type="submit">حفظ الإعدادات</Button>
+                <Button type="submit" isLoading={updateMutation.isPending} disabled={isLoading}>حفظ الإعدادات</Button>
               </div>
             </form>
           </CardContent>

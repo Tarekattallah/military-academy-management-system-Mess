@@ -49,7 +49,7 @@ const stockCountSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['draft', 'in_progress', 'completed', 'approved'],
+      enum: ['draft', 'in_progress', 'completed', 'approved', 'cancelled'],
       default: 'draft',
     },
     notes: {

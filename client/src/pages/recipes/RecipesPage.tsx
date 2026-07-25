@@ -247,7 +247,7 @@ export function RecipesPage() {
               ))}
             </div>
           ) : error ? (
-            <div className="text-center text-destructive py-8 font-medium">فشل تحميل البيانات</div>
+            <div className="text-center text-destructive py-8 font-medium">فشل تحميل البيانات: {error.message}</div>
           ) : recipes.length === 0 ? (
             <EmptyState title="لا توجد وصفات" description="قم بإضافة وصفة جديدة لبدء تخطيط الوجبات" />
           ) : (
