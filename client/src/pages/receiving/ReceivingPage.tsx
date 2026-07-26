@@ -44,14 +44,14 @@ const itemSchema = z.object({
   batchNumber: z.string().trim().min(1, 'رقم الدفعة مطلوب').max(100),
   quantity: z.coerce.number().positive('الكمية يجب أن تكون أكبر من 0'),
   unitCost: z.coerce.number().min(0).optional().or(z.literal('')).transform((v) => (v === '' ? undefined : v)),
-  manufacturingDate: z.string().optional().or(z.literal('')),
-  expiryDate: z.string().optional().or(z.literal('')),
+  manufacturingDate: z.string().optional().or(z.literal('')).transform((v) => (v === '' ? undefined : v)),
+  expiryDate: z.string().optional().or(z.literal('')).transform((v) => (v === '' ? undefined : v)),
 });
 
 const receivingSchema = z.object({
   supplier: z.string().min(1, 'المورد مطلوب'),
   warehouse: z.string().min(1, 'المستودع مطلوب'),
-  receivingDate: z.string().optional().or(z.literal('')),
+  receivingDate: z.string().optional().or(z.literal('')).transform((v) => (v === '' ? undefined : v)),
   notes: z.string().trim().max(500).optional().or(z.literal('')).transform((v) => (v === '' ? undefined : v)),
   items: z.array(itemSchema).min(1, 'يجب إضافة عنصر واحد على الأقل'),
 });

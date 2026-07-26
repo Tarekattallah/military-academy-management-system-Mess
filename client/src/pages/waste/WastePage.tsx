@@ -47,7 +47,7 @@ const itemSchema = z.object({
 
 const wasteSchema = z.object({
   warehouse: z.string().min(1, 'المستودع مطلوب'),
-  wasteDate: z.string().optional().or(z.literal('')),
+  wasteDate: z.string().optional().or(z.literal('')).transform((v) => (v === '' ? undefined : v)),
   reason: z.string().trim().min(1, 'السبب مطلوب').max(500, 'الحد الأقصى 500 حرف'),
   notes: z.string().trim().max(500).optional().or(z.literal('')).transform((v) => (v === '' ? undefined : v)),
   items: z.array(itemSchema).min(1, 'يجب إضافة عنصر واحد على الأقل'),

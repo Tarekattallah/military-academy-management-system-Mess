@@ -49,7 +49,7 @@ const itemSchema = z.object({
 const transferSchema = z.object({
   sourceWarehouse: z.string().min(1, 'المستودع المصدر مطلوب'),
   destinationWarehouse: z.string().min(1, 'المستودع الوجهة مطلوب'),
-  transferDate: z.string().optional().or(z.literal('')),
+  transferDate: z.string().optional().or(z.literal('')).transform((v) => (v === '' ? undefined : v)),
   notes: z.string().trim().max(500).optional().or(z.literal('')).transform((v) => (v === '' ? undefined : v)),
   items: z.array(itemSchema).min(1, 'يجب إضافة عنصر واحد على الأقل'),
 });
