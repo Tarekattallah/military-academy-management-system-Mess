@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '../../components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
-import { getAuditLogs, type AuditLogEntry } from '../../lib/api/entities';
-import { ClipboardList, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getAuditLogs, deleteAuditLog, clearAuditLogs, type AuditLogEntry } from '../../lib/api/entities';
+import { ClipboardList, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const ACTION_LABELS: Record<string, string> = {
   create: 'إنشاء',
@@ -39,6 +40,8 @@ export function AuditLogPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
+  const queryClient = useQueryClient();
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['audit-logs', page, module, action, username, startDate, endDate],
     queryFn: () =>
@@ -67,6 +70,36 @@ export function AuditLogPage() {
     setStartDate('');
     setEndDate('');
     setPage(1);
+  }
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteAuditLog,
+    onSuccess: () => {
+      toast.success('تم حذف السجل بنجاح');
+      queryClient.invalidateQueries({ queryKey: ['audit-logs'] });
+    },
+    onError: () => toast.error('فشل حذف السجل'),
+  });
+
+  const clearMutation = useMutation({
+    mutationFn: clearAuditLogs,
+    onSuccess: (res: any) => {
+      toast.success(res.message || 'تم مسح السجلات بنجاح');
+      queryClient.invalidateQueries({ queryKey: ['audit-logs'] });
+    },
+    onError: () => toast.error('فشل مسح السجلات'),
+  });
+
+  function handleDelete(id: string) {
+    if (confirm('هل أنت متأكد من حذف هذا السجل؟')) {
+      deleteMutation.mutate(id);
+    }
+  }
+
+  function handleClearAll() {
+    if (confirm('هل أنت متأكد من مسح جميع سجلات النشاط؟ هذا الإجراء لا يمكن التراجع عنه.')) {
+      clearMutation.mutate();
+    }
   }
 
   return (
@@ -146,6 +179,10 @@ export function AuditLogPage() {
                 </span>
               )}
             </CardTitle>
+            <Button variant="destructive" size="sm" onClick={handleClearAll} disabled={logs.length === 0 || clearMutation.isPending}>
+              <Trash2 className="size-4 ml-1" />
+              مسح السجلات
+            </Button>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -172,8 +209,9 @@ export function AuditLogPage() {
                       <th className="px-3 py-2 font-medium">المستخدم</th>
                       <th className="px-3 py-2 font-medium">الإجراء</th>
                       <th className="px-3 py-2 font-medium">الوحدة</th>
-                      <th className="px-3 py-2 font-medium">التفاصيل</th>
+                      <th className="px-3 py-2 font-medium">المرجع</th>
                       <th className="px-3 py-2 font-medium">IP</th>
+                      <th className="px-3 py-2 font-medium">إجراءات</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -189,10 +227,20 @@ export function AuditLogPage() {
                           </Badge>
                         </td>
                         <td className="px-3 py-2 text-xs font-mono">{log.module}</td>
-                        <td className="px-3 py-2 text-xs text-muted-foreground max-w-xs truncate">
-                          {log.description || log.path || '—'}
+                        <td className="px-3 py-2 text-xs text-muted-foreground max-w-[12rem] truncate" title={log.documentId || log.path || ''}>
+                          {log.documentId || log.path || '—'}
                         </td>
                         <td className="px-3 py-2 text-xs font-mono text-muted-foreground">{log.ipAddress || '—'}</td>
+                        <td className="px-3 py-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => handleDelete(log._id)}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

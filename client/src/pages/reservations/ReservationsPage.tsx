@@ -87,8 +87,8 @@ export function ReservationsPage() {
     enabled: open,
   });
 
-  // Allowed requests to reserve for: only submitted or approved requests
-  const pendingRequests = mealRequests.filter((r) => r.status === 'submitted' || r.status === 'approved');
+  // Only approved requests can be reserved (backend enforces this too)
+  const pendingRequests = mealRequests.filter((r) => r.status === 'approved');
   const activeWarehouses = warehouses.filter((w) => w.isActive);
 
   const createMutation = useMutation({

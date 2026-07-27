@@ -10,16 +10,13 @@ const create = Joi.object({
   returnType: Joi.string().valid('return_to_supplier', 'internal_return').required(),
   warehouse: Joi.string().hex().length(24).required(),
   supplier: Joi.string().hex().length(24).optional(),
-  referenceType: Joi.string().valid('Transfer').when('returnType', {
-    is: 'internal_return',
-    then: Joi.required(),
-    otherwise: Joi.forbidden(),
-  }),
-  referenceId: Joi.string().hex().length(24).when('returnType', {
-    is: 'internal_return',
-    then: Joi.required(),
-    otherwise: Joi.forbidden(),
-  }),
+  referenceType: Joi.string().valid('Transfer', '').allow('', null).optional(),
+  referenceId: Joi.string().allow('', null).custom((value, helpers) => {
+    if (value && value.length > 0 && !/^[a-f0-9]{24}$/i.test(value)) {
+      return helpers.error('string.pattern.base', { message: 'referenceId must be a valid 24-character hex ID' });
+    }
+    return value;
+  }).optional(),
   returnDate: Joi.date().iso().optional(),
   reason: Joi.string().trim().max(500).optional(),
   notes: Joi.string().trim().max(500).optional(),

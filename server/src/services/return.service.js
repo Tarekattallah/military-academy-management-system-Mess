@@ -63,14 +63,11 @@ const returnService = {
       if (!supplier.isActive) throw new AppError('Cannot return to inactive supplier', 400);
     }
 
-    // ── Validate reference document (required for internal_return) ─────────
+    // ── Validate reference document (optional for internal_return) ────────
     let referenceDoc = null;
     let referenceDisplay = '';
 
-    if (returnType === 'internal_return') {
-      if (!referenceType) throw new AppError('Reference type is required for internal return', 400);
-      if (!referenceId) throw new AppError('Reference document ID is required for internal return', 400);
-
+    if (returnType === 'internal_return' && referenceType && referenceId) {
       const validRefTypes = Object.keys(REFERENCE_MODEL_MAP);
       if (!validRefTypes.includes(referenceType)) {
         throw new AppError(
@@ -89,6 +86,7 @@ const returnService = {
       const numberField = referenceType === 'Transfer' ? 'transferNumber' : 'number';
       referenceDisplay = referenceDoc[numberField] || referenceDoc._id.toString();
     }
+
 
     // ── Validate all products exist and are active ───────────────────────
     const productIds = [...new Set(items.map((item) => item.product))];
@@ -149,6 +147,23 @@ const returnService = {
     try {
       session.startTransaction();
 
+      // ── Process each item first to build processedItems ──────────────────
+      // We collect items before creating the Return document so it can be
+      // created with a fully-populated items array in one shot, satisfying
+      // the 'at least one item' validator without a second save().
+      const processedItems = [];
+      const transactionType = returnType === 'return_to_supplier' ? 'return_to_supplier' : 'return';
+
+      for (const item of items) {
+        const { product: productId, batch: batchId, quantity } = item;
+
+        processedItems.push({
+          product: productId,
+          batch: batchId,
+          quantity,
+        });
+      }
+
       // ── Build the return document data ──────────────────────────────────
       const returnDocData = {
         returnNumber,
@@ -160,22 +175,19 @@ const returnService = {
         reason,
         notes,
         createdBy,
-        items: [], // items added below
+        items: processedItems,
       };
 
       // Include reference for internal returns (audit trail)
-      if (returnType === 'internal_return') {
+      if (returnType === 'internal_return' && referenceType && referenceId) {
         returnDocData.referenceType = referenceType;
         returnDocData.referenceId = referenceId;
       }
 
-      // ── Create the Return document ──────────────────────────────────────
+      // ── Create the Return document with all items populated ──────────────
       const returnDoc = await returnRepository.create(returnDocData, session);
 
-      // ── Process each item ─────────────────────────────────────────────
-      const processedItems = [];
-      const transactionType = returnType === 'return_to_supplier' ? 'return_to_supplier' : 'return';
-
+      // ── Create inventory transactions for each item ──────────────────────
       for (const item of items) {
         const { product: productId, batch: batchId, quantity } = item;
         const effectiveUnitCost = batchMap[batchId] || 0;
@@ -185,7 +197,9 @@ const returnService = {
         if (returnType === 'return_to_supplier') {
           transactionReason = `Return to ${supplier ? supplier.name : 'Supplier'}`;
         } else {
-          transactionReason = `Return from ${referenceType} ${referenceDisplay}`;
+          transactionReason = referenceDisplay
+            ? `Return from ${referenceType} ${referenceDisplay}`
+            : `Internal return`;
         }
 
         // ── Create inventory transaction ─────────────────────────────────
@@ -204,21 +218,12 @@ const returnService = {
         };
 
         await inventoryTransactionService.create(transactionData, { session });
-
-        processedItems.push({
-          product: productId,
-          batch: batchId,
-          quantity,
-        });
       }
-
-      // ── Update the Return document with processed items ─────────────────
-      returnDoc.items = processedItems;
-      await returnDoc.save({ session });
 
       await session.commitTransaction();
 
       return returnRepository.findById(returnDoc._id);
+
     } catch (err) {
       await session.abortTransaction();
       throw err;

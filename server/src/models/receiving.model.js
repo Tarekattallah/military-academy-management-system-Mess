@@ -72,10 +72,6 @@ const receivingSchema = new mongoose.Schema(
     items: {
       type: [receivingItemSchema],
       required: true,
-      validate: {
-        validator: (items) => items.length > 0,
-        message: 'Receiving must have at least one item',
-      },
     },
   },
   { timestamps: true }

@@ -11,7 +11,7 @@ function authenticate(req, res, next) {
 
   try {
     const decoded = verifyToken(token);
-    req.user = decoded; // { sub, username, roles, permissions }
+    req.user = { ...decoded, id: decoded.sub }; // { sub, id, username, roles, permissions }
     next();
   } catch (error) {
     next(error); // handled centrally (JsonWebTokenError / TokenExpiredError)

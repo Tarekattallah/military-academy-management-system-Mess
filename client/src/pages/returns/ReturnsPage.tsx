@@ -51,12 +51,17 @@ const returnSchema = z.object({
   warehouse: z.string().min(1, 'المستودع مطلوب'),
   supplier: z.string().optional().or(z.literal('')).transform((v) => (v === '' ? undefined : v)),
   referenceType: z.string().optional().or(z.literal('')).transform((v) => (v === '' ? undefined : v)),
-  referenceId: z.string().optional().or(z.literal('')).transform((v) => (v === '' ? undefined : v)),
+  referenceId: z.string().optional().or(z.literal(''))
+    .refine((v) => !v || /^[a-f0-9]{24}$/i.test(v), {
+      message: 'معرف التحويل يجب أن يكون 24 حرفاً هكسا (ObjectId) أو فارغاً',
+    })
+    .transform((v) => (v === '' ? undefined : v)),
   returnDate: z.string().optional().or(z.literal('')).transform((v) => (v === '' ? undefined : v)),
   reason: z.string().trim().max(500).optional().or(z.literal('')).transform((v) => (v === '' ? undefined : v)),
   notes: z.string().trim().max(500).optional().or(z.literal('')).transform((v) => (v === '' ? undefined : v)),
   items: z.array(itemSchema).min(1, 'يجب إضافة عنصر واحد على الأقل'),
 });
+
 
 type ReturnFormValues = z.infer<typeof returnSchema>;
 
@@ -171,7 +176,18 @@ export function ReturnsPage() {
 
   function onSubmit(values: ReturnFormValues) {
     if (!user) return;
-    createMutation.mutate(values);
+    // If internal_return has a referenceId, ensure referenceType is set to 'Transfer'
+    const payload = { ...values };
+    if (payload.returnType === 'internal_return' && payload.referenceId) {
+      payload.referenceType = 'Transfer';
+    } else {
+      // Clear referenceType/referenceId if not applicable
+      payload.referenceType = undefined;
+      if (payload.returnType !== 'internal_return') {
+        payload.referenceId = undefined;
+      }
+    }
+    createMutation.mutate(payload);
   }
 
   const filteredReturns = returns.filter((r) => {
@@ -304,15 +320,12 @@ export function ReturnsPage() {
           )}
 
           {watchRType === 'internal_return' && (
-            <div className="grid grid-cols-2 gap-4">
-              <FormField label="نوع المرجع">
-                <Input {...register('referenceType')} placeholder="Transfer" />
-              </FormField>
-              <FormField label="معرف المرجع">
-                <Input {...register('referenceId')} placeholder="معرف التحويل" />
-              </FormField>
-            </div>
+            <FormField label="معرف التحويل المرجعي (اختياري)" error={errors.referenceId?.message}>
+              <Input {...register('referenceId')} placeholder="اتركه فارغاً أو أدخل معرف التحويل (24 حرفاً)" />
+              <p className="text-xs text-muted-foreground mt-1">يمكن تركه فارغاً — إذا أردت ربطه بتحويل، أدخل معرف التحويل من صفحة التحويلات</p>
+            </FormField>
           )}
+
 
           <FormField label="تاريخ الإرجاع">
             <Input type="date" {...register('returnDate')} />

@@ -2,7 +2,7 @@ const reservationService = require('../services/reservation.service');
 const catchAsync = require('../utils/catchAsync');
 
 const create = catchAsync(async (req, res) => {
-  const data = { ...req.body, reservedBy: req.user.id };
+  const data = { ...req.body, reservedBy: req.user.id }; // Log the reservation data
   const reservation = await reservationService.create(data);
   res.status(201).json({ success: true, data: reservation });
 });

@@ -2,6 +2,7 @@ const express = require('express');
 const authenticate = require('../middlewares/authenticate');
 const authorize = require('../middlewares/authorize');
 const AuditLog = require('../models/auditLog.model');
+const catchAsync = require('../utils/catchAsync');
 
 const router = express.Router();
 
@@ -57,6 +58,30 @@ router.get(
       next(err);
     }
   }
+);
+
+// DELETE /api/v1/audit-logs/all — clear all logs
+router.delete(
+  '/all',
+  authorize('settings:delete'), // or whatever permission is appropriate, assuming settings:delete for now
+  catchAsync(async (req, res) => {
+    const result = await AuditLog.deleteMany({});
+    res.json({ success: true, message: `تم مسح ${result.deletedCount} سجل بنجاح` });
+  })
+);
+
+// DELETE /api/v1/audit-logs/:id — delete single log
+router.delete(
+  '/:id',
+  authorize('settings:delete'),
+  catchAsync(async (req, res) => {
+    const log = await AuditLog.findByIdAndDelete(req.params.id);
+    if (!log) {
+      // Not using AppError here since catchAsync handles next() but simple json is fine or we can throw AppError
+      return res.status(404).json({ success: false, message: 'السجل غير موجود' });
+    }
+    res.json({ success: true, message: 'تم حذف السجل بنجاح' });
+  })
 );
 
 module.exports = router;

@@ -686,6 +686,16 @@ export async function getAuditLogs(filters: AuditLogFilters = {}) {
   return data as { data: AuditLogEntry[]; pagination: { page: number; limit: number; total: number; totalPages: number } };
 }
 
+export async function deleteAuditLog(id: string) {
+  const { data } = await api.delete(`/audit-logs/${id}`);
+  return data;
+}
+
+export async function clearAuditLogs() {
+  const { data } = await api.delete('/audit-logs/all');
+  return data;
+}
+
 // ── Settings API ───────────────────────────────────────────────────────
 
 export interface SystemSettings {

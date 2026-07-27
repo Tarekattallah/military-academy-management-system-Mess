@@ -109,19 +109,10 @@ const transferService = {
     try {
       session.startTransaction();
 
-      // ── Create the Transfer document (status: completed) ──────────────
-      const transfer = await transferRepository.create({
-        transferNumber,
-        sourceWarehouse: sourceWarehouseId,
-        destinationWarehouse: destinationWarehouseId,
-        transferDate: transferDate || new Date(),
-        status: 'completed',
-        notes,
-        createdBy,
-        items: [], // items added below
-      }, session);
-
-      // ── Process each item ─────────────────────────────────────────────
+      // ── Process each item first to build processedItems ──────────────
+      // We process items before creating the Transfer document so that
+      // the document is created with a fully-populated items array,
+      // satisfying the 'at least one item' validator in one shot.
       const processedItems = [];
 
       for (const item of items) {
@@ -134,25 +125,6 @@ const transferService = {
         // are transferred between warehouses. We always use the source batch's
         // unit cost for both the TRANSFER_OUT and TRANSFER_IN transactions.
         const effectiveUnitCost = sourceBatchMap[sourceBatchId] || 0;
-
-        // ── Step A: Create TRANSFER_OUT transaction ──────────────────────
-        // Deducts from the source batch's availableQuantity using the
-        // source batch's original unit cost.
-        const transferOutData = {
-          batch: sourceBatchId,
-          product: productId,
-          warehouse: sourceWarehouseId,
-          transactionType: 'transfer_out',
-          quantity,
-          unitCost: effectiveUnitCost,
-          referenceType: 'Transfer',
-          referenceId: transfer._id,
-          reason: `Transfer to ${destinationWarehouse.name}`,
-          performedBy: createdBy,
-          notes: notes || undefined,
-        };
-
-        await inventoryTransactionService.create(transferOutData, { session });
 
         // ── Step B: Find or create destination batch ────────────────────
         // Look for existing batch with same product + destination warehouse + batch number
@@ -184,11 +156,59 @@ const transferService = {
           }, session);
         }
 
+        const destinationBatchId = destinationBatch._id ? destinationBatch._id.toString() : destinationBatch.toString();
+
+        processedItems.push({
+          product: productId,
+          sourceBatch: sourceBatchId,
+          destinationBatchNumber: trimmedDestinationBatchNumber,
+          quantity,
+          unitCost: effectiveUnitCost,
+          // store destinationBatchId temporarily for transaction step below
+          _destBatchId: destinationBatchId,
+        });
+      }
+
+      // ── Create the Transfer document with all items populated ─────────
+      // Creating with items already set avoids triggering the
+      // 'at least one item' validator with an empty array.
+      const transfer = await transferRepository.create({
+        transferNumber,
+        sourceWarehouse: sourceWarehouseId,
+        destinationWarehouse: destinationWarehouseId,
+        transferDate: transferDate || new Date(),
+        status: 'completed',
+        notes,
+        createdBy,
+        items: processedItems.map(({ _destBatchId, ...rest }) => rest),
+      }, session);
+
+      // ── Create inventory transactions for each item ───────────────────
+      for (const item of processedItems) {
+        const { product: productId, sourceBatch: sourceBatchId, quantity, unitCost: effectiveUnitCost, _destBatchId: destinationBatchId } = item;
+
+        // ── Step A: Create TRANSFER_OUT transaction ──────────────────────
+        // Deducts from the source batch's availableQuantity using the
+        // source batch's original unit cost.
+        const transferOutData = {
+          batch: sourceBatchId,
+          product: productId,
+          warehouse: sourceWarehouseId,
+          transactionType: 'transfer_out',
+          quantity,
+          unitCost: effectiveUnitCost,
+          referenceType: 'Transfer',
+          referenceId: transfer._id,
+          reason: `Transfer to ${destinationWarehouse.name}`,
+          performedBy: createdBy,
+          notes: notes || undefined,
+        };
+
+        await inventoryTransactionService.create(transferOutData, { session });
+
         // ── Step C: Create TRANSFER_IN transaction ──────────────────────
         // Adds to the destination batch's availableQuantity using the same
         // unit cost as the source batch (cost does not change on transfer).
-        const destinationBatchId = destinationBatch._id ? destinationBatch._id.toString() : destinationBatch.toString();
-
         const transferInData = {
           batch: destinationBatchId,
           product: productId,
@@ -204,19 +224,7 @@ const transferService = {
         };
 
         await inventoryTransactionService.create(transferInData, { session });
-
-        processedItems.push({
-          product: productId,
-          sourceBatch: sourceBatchId,
-          destinationBatchNumber: trimmedDestinationBatchNumber,
-          quantity,
-          unitCost: effectiveUnitCost,
-        });
       }
-
-      // ── Update the Transfer document with processed items ─────────────
-      transfer.items = processedItems;
-      await transfer.save({ session });
 
       await session.commitTransaction();
 
