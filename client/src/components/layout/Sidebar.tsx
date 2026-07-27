@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useUiStore } from '../../lib/uiStore';
 import {
   LayoutDashboard,
+  Bell,
   Users,
   Shield,
   Package,
@@ -37,6 +38,7 @@ interface NavItem {
 
 const ALL_NAV_ITEMS: NavItem[] = [
   { to: '/', label: 'لوحة التحكم', icon: LayoutDashboard },
+  { to: '/notifications', label: 'الإشعارات', icon: Bell },
   { to: '/users', label: 'المستخدمين', icon: Users, permission: 'users:view' },
   { to: '/roles', label: 'الصلاحيات', icon: Shield, permission: 'roles:view' },
   { to: '/products', label: 'المنتجات', icon: Package, permission: 'products:view' },

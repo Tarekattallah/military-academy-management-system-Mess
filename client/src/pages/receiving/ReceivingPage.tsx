@@ -250,10 +250,10 @@ export function ReceivingPage() {
   return (
     <AppLayout title="استلام البضائع">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <CardTitle>قائمة استلام البضائع</CardTitle>
           {canCreate && (
-            <Button onClick={handleOpenCreate}>
+            <Button onClick={handleOpenCreate} className="w-full sm:w-auto justify-center">
               <Plus className="size-4" />
               استلام جديد
             </Button>
@@ -261,11 +261,11 @@ export function ReceivingPage() {
         </CardHeader>
         <CardContent>
           {/* Filters */}
-          <div className="mb-4 flex flex-wrap gap-2">
+          <div className="mb-4 flex flex-col sm:flex-row flex-wrap gap-2">
             <select
               value={selectedSupplier}
               onChange={(e) => setSelectedSupplier(e.target.value)}
-              className="h-9 rounded-md border border-input bg-card px-3 text-sm"
+              className="h-9 w-full sm:w-auto rounded-md border border-input bg-card px-3 text-sm"
             >
               <option value="">كل الموردين</option>
               {suppliers.map((s) => (
@@ -275,7 +275,7 @@ export function ReceivingPage() {
             <select
               value={selectedWarehouse}
               onChange={(e) => setSelectedWarehouse(e.target.value)}
-              className="h-9 rounded-md border border-input bg-card px-3 text-sm"
+              className="h-9 w-full sm:w-auto rounded-md border border-input bg-card px-3 text-sm"
             >
               <option value="">كل المستودعات</option>
               {warehouses.map((w) => (
@@ -285,7 +285,7 @@ export function ReceivingPage() {
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="h-9 rounded-md border border-input bg-card px-3 text-sm"
+              className="h-9 w-full sm:w-auto rounded-md border border-input bg-card px-3 text-sm"
             >
               <option value="">كل الحالات</option>
               <option value="draft">مسودة</option>
@@ -331,7 +331,7 @@ export function ReceivingPage() {
         }
       >
         <form id="receiving-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SelectField
               control={control}
               name="supplier"
@@ -388,7 +388,7 @@ export function ReceivingPage() {
                     </Button>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <SelectField
                     control={control}
                     name={`items.${index}.product`}
@@ -402,7 +402,7 @@ export function ReceivingPage() {
                     <Input {...register(`items.${index}.batchNumber`)} placeholder="رقم الدفعة" />
                   </FormField>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <FormField label="الكمية" required error={errors.items?.[index]?.quantity?.message}>
                     <Input type="number" min="1" step="1" {...register(`items.${index}.quantity`)} placeholder="1" />
                   </FormField>
@@ -410,7 +410,7 @@ export function ReceivingPage() {
                     <Input type="number" min="0" step="0.01" {...register(`items.${index}.unitCost`)} placeholder="اختياري" />
                   </FormField>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <FormField label="تاريخ التصنيع">
                     <Input type="date" {...register(`items.${index}.manufacturingDate`)} />
                   </FormField>

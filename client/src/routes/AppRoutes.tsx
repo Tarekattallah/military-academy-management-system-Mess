@@ -23,6 +23,7 @@ import { MealAttendancePage } from '../pages/mealAttendance/MealAttendancePage';
 import { ReportsPage } from '../pages/reports/ReportsPage';
 import { SettingsPage } from '../pages/settings/SettingsPage';
 import { AuditLogPage } from '../pages/auditLog/AuditLogPage';
+import { NotificationsPage } from '../pages/notifications/NotificationsPage';
 import { ProtectedRoute } from './ProtectedRoute';
 
 export function AppRoutes() {
@@ -35,6 +36,14 @@ export function AppRoutes() {
         element={
           <ProtectedRoute>
             <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute>
+            <NotificationsPage />
           </ProtectedRoute>
         }
       />

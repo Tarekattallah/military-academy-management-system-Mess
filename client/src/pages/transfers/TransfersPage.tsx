@@ -254,10 +254,10 @@ export function TransfersPage() {
   return (
     <AppLayout title="التحويلات">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <CardTitle>قائمة التحويلات</CardTitle>
           {canCreate && (
-            <Button onClick={handleOpenCreate}>
+            <Button onClick={handleOpenCreate} className="w-full sm:w-auto justify-center">
               <Plus className="size-4" />
               تحويل جديد
             </Button>
@@ -265,11 +265,11 @@ export function TransfersPage() {
         </CardHeader>
         <CardContent>
           {/* Filters */}
-          <div className="mb-4 flex flex-wrap gap-2">
+          <div className="mb-4 flex flex-col sm:flex-row flex-wrap gap-2">
             <select
               value={selectedSource}
               onChange={(e) => setSelectedSource(e.target.value)}
-              className="h-9 rounded-md border border-input bg-card px-3 text-sm"
+              className="h-9 w-full sm:w-auto rounded-md border border-input bg-card px-3 text-sm"
             >
               <option value="">كل المستودعات المصدر</option>
               {activeWarehouses.map((w) => (
@@ -279,7 +279,7 @@ export function TransfersPage() {
             <select
               value={selectedDest}
               onChange={(e) => setSelectedDest(e.target.value)}
-              className="h-9 rounded-md border border-input bg-card px-3 text-sm"
+              className="h-9 w-full sm:w-auto rounded-md border border-input bg-card px-3 text-sm"
             >
               <option value="">كل المستودعات الوجهة</option>
               {activeWarehouses.map((w) => (
@@ -289,7 +289,7 @@ export function TransfersPage() {
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="h-9 rounded-md border border-input bg-card px-3 text-sm"
+              className="h-9 w-full sm:w-auto rounded-md border border-input bg-card px-3 text-sm"
             >
               <option value="">كل الحالات</option>
               <option value="draft">مسودة</option>
@@ -335,7 +335,7 @@ export function TransfersPage() {
         }
       >
         <form id="transfer-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SelectField
               control={control}
               name="sourceWarehouse"
@@ -392,7 +392,7 @@ export function TransfersPage() {
                     </Button>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <SelectField
                     control={control}
                     name={`items.${index}.product`}
@@ -412,7 +412,7 @@ export function TransfersPage() {
                     error={errors.items?.[index]?.sourceBatch?.message}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <FormField label="رقم الدفعة الوجهة" required error={errors.items?.[index]?.destinationBatchNumber?.message}>
                     <Input {...register(`items.${index}.destinationBatchNumber`)} placeholder="رقم الدفعة في الوجهة" />
                   </FormField>

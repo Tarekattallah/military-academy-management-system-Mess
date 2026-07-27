@@ -30,7 +30,7 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
         className="fixed inset-0 bg-black/40"
         onClick={() => onOpenChange(false)}
       />
-      <div className="relative z-50 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg border border-border bg-card shadow-lg mx-4">
+      <div className="relative z-50 w-full max-w-[calc(100vw-1rem)] sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-lg border border-border bg-card shadow-lg mx-2 sm:mx-4">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <div>
             <h2 className="text-base font-semibold text-foreground">{title}</h2>

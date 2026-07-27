@@ -642,6 +642,8 @@ export interface Notification {
   title: string;
   message: string;
   createdAt: string;
+  link?: string;
+  read?: boolean;
 }
 
 export async function getNotifications() {

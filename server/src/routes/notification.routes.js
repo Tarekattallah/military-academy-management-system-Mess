@@ -41,6 +41,7 @@ router.get('/', async (req, res, next) => {
         title: 'دفعة منتهية الصلاحية',
         message: `${b.product?.name} (${b.batchNumber}) في ${b.warehouse?.name} — انتهت صلاحيتها`,
         createdAt: b.expiryDate,
+        link: '/batches',
       });
     }
 
@@ -63,6 +64,7 @@ router.get('/', async (req, res, next) => {
         title: 'دفعة قريبة الانتهاء',
         message: `${b.product?.name} (${b.batchNumber}) — تنتهي خلال ${daysLeft} يوم`,
         createdAt: b.expiryDate,
+        link: '/batches',
       });
     }
 
@@ -88,6 +90,7 @@ router.get('/', async (req, res, next) => {
           title: 'مخزون منخفض',
           message: `${cs.product.name} في ${cs.warehouse?.name} — المتاح: ${cs.availableQuantity} (الحد الأدنى: ${cs.product.minStockLevel})`,
           createdAt: cs.lastTransactionDate || cs.updatedAt,
+          link: '/inventory',
         });
       }
     }
@@ -105,6 +108,7 @@ router.get('/', async (req, res, next) => {
         title: 'طلب وجبة بانتظار الموافقة',
         message: `طلب رقم ${r.requestNumber} من ${r.requestingUnit}`,
         createdAt: r.requestDate || r.createdAt,
+        link: '/meal-requests',
       });
     }
 

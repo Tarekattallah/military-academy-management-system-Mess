@@ -58,7 +58,7 @@ export function Header({ title }: { title: string }) {
       </Button>
 
       {/* Title */}
-      <h1 className="text-xl font-semibold text-foreground flex-1">{title}</h1>
+      <h1 className="text-sm sm:text-xl font-bold text-foreground flex-1 truncate">{title}</h1>
 
       {/* User info & logout */}
       {user && (
