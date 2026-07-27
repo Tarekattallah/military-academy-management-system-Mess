@@ -4,11 +4,11 @@ const env = require('../config/env');
 
 function setAuthCookie(res, token) {
   res.cookie(env.cookieName, token, {
-    httpOnly: true,
-    secure: env.nodeEnv === 'production',
-    sameSite: 'lax',
-    maxAge: env.cookieMaxAgeMs,
-  });
+  httpOnly: true,
+  secure: true,
+  sameSite: 'none',
+  maxAge: env.cookieMaxAgeMs,
+});
 }
 
 const login = catchAsync(async (req, res) => {
