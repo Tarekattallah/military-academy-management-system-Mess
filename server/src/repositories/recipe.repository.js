@@ -13,6 +13,7 @@ const recipeRepository = {
       .populate('items.unit', 'name abbreviation');
   },
 
+  
   findByName(name) {
     return Recipe.findOne({ name });
   },
