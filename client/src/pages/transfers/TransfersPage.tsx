@@ -176,8 +176,8 @@ export function TransfersPage() {
   }
 
   const filteredTransfers = transfers.filter((t) => {
-    if (selectedSource && t.sourceWarehouse._id !== selectedSource) return false;
-    if (selectedDest && t.destinationWarehouse._id !== selectedDest) return false;
+    if (selectedSource && t.sourceWarehouse?._id !== selectedSource) return false;
+    if (selectedDest && t.destinationWarehouse?._id !== selectedDest) return false;
     if (selectedStatus && t.status !== selectedStatus) return false;
     return true;
   });
@@ -193,12 +193,12 @@ export function TransfersPage() {
     {
       accessorKey: 'sourceWarehouse',
       header: 'من مستودع',
-      cell: ({ row }: { row: { original: Transfer } }) => row.original.sourceWarehouse.name,
+      cell: ({ row }: { row: { original: Transfer } }) => row.original.sourceWarehouse?.name ?? '—',
     },
     {
       accessorKey: 'destinationWarehouse',
       header: 'إلى مستودع',
-      cell: ({ row }: { row: { original: Transfer } }) => row.original.destinationWarehouse.name,
+      cell: ({ row }: { row: { original: Transfer } }) => row.original.destinationWarehouse?.name ?? '—',
     },
     {
       accessorKey: 'transferDate',
@@ -225,7 +225,7 @@ export function TransfersPage() {
     {
       accessorKey: 'createdBy',
       header: 'بواسطة',
-      cell: ({ row }: { row: { original: Transfer } }) => row.original.createdBy.displayName,
+      cell: ({ row }: { row: { original: Transfer } }) => row.original.createdBy?.displayName ?? '—',
     },
     {
       id: 'actions',
@@ -452,11 +452,11 @@ export function TransfersPage() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">من مستودع</p>
-                <p className="text-sm font-medium">{viewTarget.sourceWarehouse.name} ({viewTarget.sourceWarehouse.code})</p>
+                <p className="text-sm font-medium">{viewTarget.sourceWarehouse?.name ?? '—'} ({viewTarget.sourceWarehouse?.code ?? ''})</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">إلى مستودع</p>
-                <p className="text-sm font-medium">{viewTarget.destinationWarehouse.name} ({viewTarget.destinationWarehouse.code})</p>
+                <p className="text-sm font-medium">{viewTarget.destinationWarehouse?.name ?? '—'} ({viewTarget.destinationWarehouse?.code ?? ''})</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">التاريخ</p>
@@ -464,7 +464,7 @@ export function TransfersPage() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">بواسطة</p>
-                <p className="text-sm">{viewTarget.createdBy.displayName}</p>
+                <p className="text-sm">{viewTarget.createdBy?.displayName ?? '—'}</p>
               </div>
             </div>
 
@@ -481,14 +481,14 @@ export function TransfersPage() {
                 {viewTarget.items.map((item, index) => (
                   <div key={index} className="rounded-md border border-border p-2 text-sm">
                     <div className="flex items-center justify-between">
-                      <p className="font-medium">{item.product.name}</p>
-                      <span className="font-mono text-xs">{item.product.sku}</span>
+                      <p className="font-medium">{item.product?.name ?? '—'}</p>
+                      <span className="font-mono text-xs">{item.product?.sku ?? ''}</span>
                     </div>
                     <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                      <span>الدفعة المصدر: <span className="font-mono">{item.sourceBatch.batchNumber}</span></span>
+                      <span>الدفعة المصدر: <span className="font-mono">{item.sourceBatch?.batchNumber ?? '—'}</span></span>
                       <span>دفعة الوجهة: <span className="font-mono">{item.destinationBatchNumber}</span></span>
                       <span>الكمية: <span className="font-mono">{item.quantity}</span></span>
-                      <span>التكلفة: <span className="font-mono">{item.unitCost.toFixed(2)} ر.س</span></span>
+                      <span>التكلفة: <span className="font-mono">{(item.unitCost ?? 0).toFixed(2)} ر.س</span></span>
                     </div>
                   </div>
                 ))}
@@ -536,11 +536,11 @@ export function TransfersPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">من:</span>
-                <span>{cancelTarget.sourceWarehouse.name}</span>
+                <span>{cancelTarget.sourceWarehouse?.name ?? '—'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">إلى:</span>
-                <span>{cancelTarget.destinationWarehouse.name}</span>
+                <span>{cancelTarget.destinationWarehouse?.name ?? '—'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">البنود:</span>

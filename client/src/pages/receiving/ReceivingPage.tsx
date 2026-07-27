@@ -173,8 +173,8 @@ export function ReceivingPage() {
   }
 
   const filteredReceivings = receivings.filter((r) => {
-    if (selectedSupplier && r.supplier._id !== selectedSupplier) return false;
-    if (selectedWarehouse && r.warehouse._id !== selectedWarehouse) return false;
+    if (selectedSupplier && r.supplier?._id !== selectedSupplier) return false;
+    if (selectedWarehouse && r.warehouse?._id !== selectedWarehouse) return false;
     if (selectedStatus && r.status !== selectedStatus) return false;
     return true;
   });
@@ -190,12 +190,12 @@ export function ReceivingPage() {
     {
       accessorKey: 'supplier',
       header: 'المورد',
-      cell: ({ row }: { row: { original: Receiving } }) => row.original.supplier.name,
+      cell: ({ row }: { row: { original: Receiving } }) => row.original.supplier?.name ?? '—',
     },
     {
       accessorKey: 'warehouse',
       header: 'المستودع',
-      cell: ({ row }: { row: { original: Receiving } }) => row.original.warehouse.name,
+      cell: ({ row }: { row: { original: Receiving } }) => row.original.warehouse?.name ?? '—',
     },
     {
       accessorKey: 'receivingDate',
@@ -222,7 +222,7 @@ export function ReceivingPage() {
     {
       accessorKey: 'createdBy',
       header: 'بواسطة',
-      cell: ({ row }: { row: { original: Receiving } }) => row.original.createdBy.displayName,
+      cell: ({ row }: { row: { original: Receiving } }) => row.original.createdBy?.displayName ?? '—',
     },
     {
       id: 'actions',
@@ -450,11 +450,11 @@ export function ReceivingPage() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">المورد</p>
-                <p className="text-sm font-medium">{viewTarget.supplier.name}</p>
+                <p className="text-sm font-medium">{viewTarget.supplier?.name ?? '—'}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">المستودع</p>
-                <p className="text-sm font-medium">{viewTarget.warehouse.name} ({viewTarget.warehouse.code})</p>
+                <p className="text-sm font-medium">{viewTarget.warehouse?.name ?? '—'} ({viewTarget.warehouse?.code ?? ''})</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">التاريخ</p>
@@ -462,7 +462,7 @@ export function ReceivingPage() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">بواسطة</p>
-                <p className="text-sm">{viewTarget.createdBy.displayName}</p>
+                <p className="text-sm">{viewTarget.createdBy?.displayName ?? '—'}</p>
               </div>
             </div>
 
@@ -479,8 +479,8 @@ export function ReceivingPage() {
                 {viewTarget.items.map((item, index) => (
                   <div key={index} className="rounded-md border border-border p-2 text-sm">
                     <div className="flex items-center justify-between">
-                      <p className="font-medium">{item.product.name}</p>
-                      <span className="font-mono text-xs">{item.product.sku}</span>
+                      <p className="font-medium">{item.product?.name ?? '—'}</p>
+                      <span className="font-mono text-xs">{item.product?.sku ?? ''}</span>
                     </div>
                     <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                       <span>الدفعة: <span className="font-mono">{item.batchNumber}</span></span>
@@ -527,11 +527,11 @@ export function ReceivingPage() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">المورد</p>
-                <p className="font-medium">{cancelTarget.supplier.name}</p>
+                <p className="font-medium">{cancelTarget.supplier?.name ?? '—'}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">المستودع</p>
-                <p className="font-medium">{cancelTarget.warehouse.name}</p>
+                <p className="font-medium">{cancelTarget.warehouse?.name ?? '—'}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">البنود</p>

@@ -22,6 +22,15 @@ const receivingRepository = {
       .populate('items.product', 'name sku')
       .sort({ receivingDate: -1 });
   },
+
+  updateById(id, data, session) {
+    const options = { new: true, ...(session ? { session } : {}) };
+    return Receiving.findByIdAndUpdate(id, data, options)
+      .populate('supplier', 'name')
+      .populate('warehouse', 'name code')
+      .populate('createdBy', 'displayName')
+      .populate('items.product', 'name sku');
+  },
 };
 
 module.exports = receivingRepository;

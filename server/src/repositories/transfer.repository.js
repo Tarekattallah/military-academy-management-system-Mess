@@ -24,6 +24,16 @@ const transferRepository = {
       .populate('items.sourceBatch', 'batchNumber')
       .sort({ transferDate: -1 });
   },
+
+  updateById(id, data, session) {
+    const options = { new: true, ...(session ? { session } : {}) };
+    return Transfer.findByIdAndUpdate(id, data, options)
+      .populate('sourceWarehouse', 'name code')
+      .populate('destinationWarehouse', 'name code')
+      .populate('createdBy', 'displayName')
+      .populate('items.product', 'name sku')
+      .populate('items.sourceBatch', 'batchNumber');
+  },
 };
 
 module.exports = transferRepository;
