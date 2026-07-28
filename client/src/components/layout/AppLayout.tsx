@@ -9,7 +9,7 @@ export function AppLayout({ title, children }: { title: string; children: ReactN
       <Sidebar />
       <div className="flex flex-1 flex-col">
         <Header title={title} />
-        <main className="flex-1 p-4 lg:p-6">
+        <main className="flex-1 p-3 sm:p-4 lg:p-6 min-w-0 overflow-x-hidden">
           {children}
         </main>
       </div>

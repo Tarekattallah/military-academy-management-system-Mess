@@ -186,9 +186,9 @@ export function UnitsPage() {
   return (
     <AppLayout title="الوحدات">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <CardTitle>قائمة الوحدات</CardTitle>
-          <Button onClick={handleOpenCreate}>
+          <Button onClick={handleOpenCreate} className="w-full sm:w-auto justify-center">
             <Plus className="size-4" />
             إضافة وحدة
           </Button>
@@ -230,7 +230,7 @@ export function UnitsPage() {
         }
       >
         <form id="unit-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label="الاسم" required error={errors.name?.message}>
               <Input {...register('name')} placeholder="اسم الوحدة" />
             </FormField>

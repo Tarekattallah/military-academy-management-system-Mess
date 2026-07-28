@@ -266,10 +266,10 @@ export function InventoryPage() {
   return (
     <AppLayout title="المخزون">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <CardTitle>حركات المخزون</CardTitle>
           {canCreate && (
-            <Button onClick={handleOpenCreate}>
+            <Button onClick={handleOpenCreate} className="w-full sm:w-auto justify-center">
               <Plus className="size-4" />
               إضافة حركة
             </Button>
@@ -277,11 +277,11 @@ export function InventoryPage() {
         </CardHeader>
         <CardContent>
           {/* Filters */}
-          <div className="mb-4 flex flex-wrap gap-2">
+          <div className="mb-4 flex flex-col sm:flex-row flex-wrap gap-2">
             <select
               value={selectedProduct}
               onChange={(e) => setSelectedProduct(e.target.value)}
-              className="h-9 rounded-md border border-input bg-card px-3 text-sm"
+              className="h-9 w-full sm:w-auto rounded-md border border-input bg-card px-3 text-sm"
             >
               <option value="">كل المنتجات</option>
               {products.map((p) => (
@@ -291,7 +291,7 @@ export function InventoryPage() {
             <select
               value={selectedWarehouse}
               onChange={(e) => setSelectedWarehouse(e.target.value)}
-              className="h-9 rounded-md border border-input bg-card px-3 text-sm"
+              className="h-9 w-full sm:w-auto rounded-md border border-input bg-card px-3 text-sm"
             >
               <option value="">كل المستودعات</option>
               {warehouses.map((w) => (
@@ -301,7 +301,7 @@ export function InventoryPage() {
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="h-9 rounded-md border border-input bg-card px-3 text-sm"
+              className="h-9 w-full sm:w-auto rounded-md border border-input bg-card px-3 text-sm"
             >
               <option value="">كل الأنواع</option>
               {TRANSACTION_TYPE_OPTIONS.map((opt) => (

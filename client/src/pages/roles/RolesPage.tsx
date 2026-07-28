@@ -206,10 +206,10 @@ export function RolesPage() {
   return (
     <AppLayout title="الصلاحيات">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <CardTitle>قائمة الأدوار</CardTitle>
           {canCreate && (
-            <Button onClick={handleOpenCreate}>
+            <Button onClick={handleOpenCreate} className="w-full sm:w-auto justify-center">
               <Plus className="size-4" />
               إضافة دور
             </Button>

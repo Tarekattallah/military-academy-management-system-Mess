@@ -30,23 +30,23 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
         className="fixed inset-0 bg-black/40"
         onClick={() => onOpenChange(false)}
       />
-      <div className="relative z-50 w-full max-w-[calc(100vw-1rem)] sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-lg border border-border bg-card shadow-lg mx-2 sm:mx-4">
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <div>
-            <h2 className="text-base font-semibold text-foreground">{title}</h2>
+      <div className="relative z-50 w-full max-w-[calc(100vw-0.5rem)] sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-lg border border-border bg-card shadow-lg mx-1 sm:mx-4">
+        <div className="flex items-start justify-between border-b border-border px-3 sm:px-4 py-3 gap-2">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-sm sm:text-base font-semibold text-foreground truncate">{title}</h2>
             {description && (
-              <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground truncate">{description}</p>
             )}
           </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="rounded-md p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
+            className="rounded-md p-1 text-muted-foreground hover:bg-secondary hover:text-foreground shrink-0"
           >
             <X className="size-4" />
           </button>
         </div>
-        {children && <div className="p-4">{children}</div>}
-        {footer && <div className="border-t border-border px-4 py-3">{footer}</div>}
+        {children && <div className="p-3 sm:p-4">{children}</div>}
+        {footer && <div className="border-t border-border px-3 sm:px-4 py-3">{footer}</div>}
       </div>
     </div>
   );

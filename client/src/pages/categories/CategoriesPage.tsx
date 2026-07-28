@@ -155,12 +155,13 @@ export function CategoriesPage() {
   return (
     <AppLayout title="التصنيفات">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <CardTitle>قائمة التصنيفات</CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
               size="sm"
+              className="flex-1 sm:flex-initial justify-center"
               onClick={() =>
                 exportToCSV(
                   categories,
@@ -176,7 +177,7 @@ export function CategoriesPage() {
               <Download className="size-4" />
               تصدير
             </Button>
-            <Button onClick={handleOpenCreate}>
+            <Button onClick={handleOpenCreate} className="flex-1 sm:flex-initial justify-center">
               <Plus className="size-4" />
               إضافة تصنيف
             </Button>

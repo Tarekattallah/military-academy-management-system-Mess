@@ -211,17 +211,17 @@ export function StockCountsPage() {
   return (
     <AppLayout title="جرد المخزون">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <CardTitle>قائمة الجرد</CardTitle>
-          {canCreate && <Button onClick={handleOpenCreate}><Plus className="size-4" /> جرد جديد</Button>}
+          {canCreate && <Button onClick={handleOpenCreate} className="w-full sm:w-auto justify-center"><Plus className="size-4" /> جرد جديد</Button>}
         </CardHeader>
         <CardContent>
-          <div className="mb-4 flex flex-wrap gap-2">
-            <select value={selectedWarehouse} onChange={(e) => setSelectedWarehouse(e.target.value)} className="h-9 rounded-md border border-input bg-card px-3 text-sm">
+          <div className="mb-4 flex flex-col sm:flex-row flex-wrap gap-2">
+            <select value={selectedWarehouse} onChange={(e) => setSelectedWarehouse(e.target.value)} className="h-9 w-full sm:w-auto rounded-md border border-input bg-card px-3 text-sm">
               <option value="">كل المستودعات</option>
               {activeWarehouses.map((w) => <option key={w._id} value={w._id}>{w.name}</option>)}
             </select>
-            <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className="h-9 rounded-md border border-input bg-card px-3 text-sm">
+            <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className="h-9 w-full sm:w-auto rounded-md border border-input bg-card px-3 text-sm">
               <option value="">كل الحالات</option>
               <option value="draft">مسودة</option>
               <option value="in_progress">قيد التنفيذ</option>

@@ -209,12 +209,13 @@ export function WarehousesPage() {
   return (
     <AppLayout title="المستودعات">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <CardTitle>قائمة المستودعات</CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
               size="sm"
+              className="flex-1 sm:flex-initial justify-center"
               onClick={() =>
                 exportToCSV(
                   warehouses,
@@ -232,7 +233,7 @@ export function WarehousesPage() {
               تصدير
             </Button>
             {canCreate && (
-              <Button onClick={handleOpenCreate}>
+              <Button onClick={handleOpenCreate} className="flex-1 sm:flex-initial justify-center">
                 <Plus className="size-4" />
                 إضافة مستودع
               </Button>

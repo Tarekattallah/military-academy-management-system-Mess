@@ -261,12 +261,13 @@ export function BatchesPage() {
   return (
     <AppLayout title="الدفعات">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <CardTitle>قائمة الدفعات</CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
               size="sm"
+              className="flex-1 sm:flex-initial justify-center"
               onClick={() =>
                 exportToCSV(
                   filtered,
@@ -287,20 +288,20 @@ export function BatchesPage() {
               <Download className="size-4" />
               تصدير
             </Button>
-            {canCreate && <Button onClick={handleOpenCreate}><Plus className="size-4" /> دفعة جديدة</Button>}
+            {canCreate && <Button onClick={handleOpenCreate} className="flex-1 sm:flex-initial justify-center"><Plus className="size-4" /> دفعة جديدة</Button>}
           </div>
         </CardHeader>
         <CardContent>
-          <div className="mb-4 flex flex-wrap gap-2">
-            <select value={selectedProduct} onChange={(e) => setSelectedProduct(e.target.value)} className="h-9 rounded-md border border-input bg-card px-3 text-sm">
+          <div className="mb-4 flex flex-col sm:flex-row flex-wrap gap-2">
+            <select value={selectedProduct} onChange={(e) => setSelectedProduct(e.target.value)} className="h-9 w-full sm:w-auto rounded-md border border-input bg-card px-3 text-sm">
               <option value="">كل المنتجات</option>
               {activeProducts.map((p) => <option key={p._id} value={p._id}>{p.name}</option>)}
             </select>
-            <select value={selectedWarehouse} onChange={(e) => setSelectedWarehouse(e.target.value)} className="h-9 rounded-md border border-input bg-card px-3 text-sm">
+            <select value={selectedWarehouse} onChange={(e) => setSelectedWarehouse(e.target.value)} className="h-9 w-full sm:w-auto rounded-md border border-input bg-card px-3 text-sm">
               <option value="">كل المستودعات</option>
               {activeWarehouses.map((w) => <option key={w._id} value={w._id}>{w.name}</option>)}
             </select>
-            <select value={selectedBStatus} onChange={(e) => setSelectedBStatus(e.target.value)} className="h-9 rounded-md border border-input bg-card px-3 text-sm">
+            <select value={selectedBStatus} onChange={(e) => setSelectedBStatus(e.target.value)} className="h-9 w-full sm:w-auto rounded-md border border-input bg-card px-3 text-sm">
               <option value="">كل الحالات</option>
               <option value="active">نشط</option>
               <option value="depleted">منتهي</option>

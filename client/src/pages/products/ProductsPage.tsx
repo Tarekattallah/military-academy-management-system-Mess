@@ -230,12 +230,13 @@ export function ProductsPage() {
   return (
     <AppLayout title="المنتجات">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <CardTitle>قائمة المنتجات</CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
               size="sm"
+              className="flex-1 sm:flex-initial justify-center"
               onClick={() =>
                 exportToCSV(
                   products,
@@ -254,7 +255,7 @@ export function ProductsPage() {
               <Download className="size-4" />
               تصدير
             </Button>
-            <Button onClick={handleOpenCreate}>
+            <Button onClick={handleOpenCreate} className="flex-1 sm:flex-initial justify-center">
               <Plus className="size-4" />
               إضافة منتج
             </Button>
@@ -305,7 +306,7 @@ export function ProductsPage() {
             <Input {...register('description')} placeholder="وصف اختياري" />
           </FormField>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SelectField
               control={control}
               name="category"
@@ -326,7 +327,7 @@ export function ProductsPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label="سعر الوحدة" error={errors.unitPrice?.message}>
               <Input type="number" step="0.01" {...register('unitPrice')} />
             </FormField>
@@ -345,7 +346,7 @@ export function ProductsPage() {
             error={errors.supplier?.message}
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label="الحد الأدنى للمخزون" error={errors.minStockLevel?.message}>
               <Input type="number" {...register('minStockLevel')} />
             </FormField>
@@ -355,7 +356,7 @@ export function ProductsPage() {
             </FormField>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label="SKU" error={errors.sku?.message}>
               <Input {...register('sku')} placeholder="ABCD-001" />
             </FormField>
