@@ -43,8 +43,20 @@ export function NotificationBell() {
     useNotificationStore();
 
   useEffect(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//localhost:5000`;
+    // Derive the WebSocket URL from the API base URL so it works in both
+    // development (Vite proxy / localhost) and production (random origin).
+    const apiBase = import.meta.env.VITE_API_URL as string | undefined;
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    let wsUrl: string;
+
+    if (apiBase && !apiBase.startsWith('/')) {
+      // Absolute API URL (e.g. https://api.example.com/api/v1) → wss://api.example.com
+      wsUrl = apiBase.replace(/^http/, 'ws');
+    } else {
+      // Same-origin: ws(s)://current-host
+      wsUrl = `${wsProtocol}//${window.location.host}`;
+    }
+
     let socket: WebSocket;
     let isMounted = true;
     let reconnectTimeout: any;

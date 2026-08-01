@@ -3,12 +3,15 @@ const catchAsync = require('../utils/catchAsync');
 const env = require('../config/env');
 
 function setAuthCookie(res, token) {
+  // In production (HTTPS) we use Secure + SameSite=None (cross-site between Vercel frontend & Render backend).
+  // In development (HTTP localhost) we use a lax cookie so the browser stores it correctly.
+  const isProduction = env.nodeEnv === 'production';
   res.cookie(env.cookieName, token, {
-  httpOnly: true,
-  secure: true,
-  sameSite: 'none',
-  maxAge: env.cookieMaxAgeMs,
-});
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    maxAge: env.cookieMaxAgeMs,
+  });
 }
 
 const login = catchAsync(async (req, res) => {
@@ -26,7 +29,11 @@ const register = catchAsync(async (req, res) => {
 });
 
 const logout = catchAsync(async (req, res) => {
-  res.clearCookie(env.cookieName);
+  res.clearCookie(env.cookieName, {
+    httpOnly: true,
+    secure: env.nodeEnv === 'production',
+    sameSite: env.nodeEnv === 'production' ? 'none' : 'lax',
+  });
   res.status(200).json({ success: true, message: 'Logged out successfully' });
 });
 

@@ -10,7 +10,6 @@ const auditLogger = require('./middlewares/auditLogger');
 const { notFound, errorHandler } = require('./middlewares/errorHandler');
 
 const app = express();
-console.log("CLIENT_URL =", env.clientUrl);
 app.use(helmet());
 app.use(
   cors({
