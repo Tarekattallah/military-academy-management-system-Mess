@@ -45,9 +45,9 @@ export function LoginPage() {
             <Warehouse className="size-6 text-sidebar-foreground" />
           </div>
           <h1 className="text-xl font-semibold text-sidebar-foreground">
-            نظام إدارة مستودعات المطاعم العسكرية
+            MessOps
           </h1>
-          <p className="mt-1 text-sm text-sidebar-muted">سجل الدخول للمتابعة</p>
+          <p className="mt-1 text-sm text-sidebar-muted">نظام عمليات المطاعم العسكرية</p>
         </div>
 
         <Card className="p-6">

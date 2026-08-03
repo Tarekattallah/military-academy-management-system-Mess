@@ -129,10 +129,10 @@ export function Sidebar() {
             <div className="flex size-8 items-center justify-center rounded-md bg-sidebar-accent">
               <Warehouse className="size-5 text-sidebar-foreground" />
             </div>
-            <div>
-              <p className="text-xs font-semibold leading-tight">نظام المستودعات</p>
-              <p className="text-[10px] leading-tight text-sidebar-muted">المطاعم العسكرية</p>
-            </div>
+             <div>
+               <p className="text-xs font-semibold leading-tight">MessOps</p>
+               <p className="text-[10px] leading-tight text-sidebar-muted">نظام عمليات المطاعم العسكرية</p>
+             </div>
           </div>
         )}
         {isSidebarCollapsed && (

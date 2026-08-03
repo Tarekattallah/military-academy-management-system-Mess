@@ -19,7 +19,7 @@ export function SettingsPage() {
     queryFn: getSystemSettings,
   });
 
-  const [appName, setAppName] = useState('نظام إدارة المستودعات والتموين العسكري (MMWMS)');
+  const [appName, setAppName] = useState('نظام عمليات المطاعم العسكرية (MessOps)');
   const [unitCode, setUnitCode] = useState('SEC-MIL-HQ-01');
   const [language, setLanguage] = useState('ar');
 
@@ -35,9 +35,9 @@ export function SettingsPage() {
     mutationFn: updateSystemSettings,
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['system-settings'] });
-      localStorage.setItem('mmwms_app_name', data.appName);
-      localStorage.setItem('mmwms_unit_code', data.unitCode);
-      localStorage.setItem('mmwms_language', data.language);
+      localStorage.setItem('messops_app_name', data.appName);
+      localStorage.setItem('messops_unit_code', data.unitCode);
+      localStorage.setItem('messops_language', data.language);
       toast.success('تم حفظ إعدادات النظام العامة بنجاح');
     },
     onError: (err: any) => {

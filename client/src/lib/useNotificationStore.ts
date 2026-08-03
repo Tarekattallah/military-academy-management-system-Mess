@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
-const READ_KEY = 'mmwms_read_notifications';
-const DELETED_KEY = 'mmwms_deleted_notifications';
+const READ_KEY = 'messops_read_notifications';
+const DELETED_KEY = 'messops_deleted_notifications';
 
 function getStoredArray(key: string): string[] {
   try {

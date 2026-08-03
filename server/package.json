@@ -1,7 +1,7 @@
 {
   "name": "mmwms-server",
   "version": "1.0.0",
-  "description": "Military Mess Warehouse Management System - Backend API",
+  "description": "MessOps Backend — Military Mess Operations API",
   "main": "src/server.js",
   "type": "commonjs",
   "scripts": {

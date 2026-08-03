@@ -1,4 +1,4 @@
-# Military Mess Warehouse Management System (MMWMS)
+# MessOps — Military Mess Operations System
 
 Batch-based inventory and meal management system for a military mess.
 Simple MVC architecture: **Node.js + Express + MongoDB (Mongoose)** on the

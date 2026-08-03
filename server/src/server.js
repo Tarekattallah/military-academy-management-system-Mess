@@ -6,7 +6,7 @@ async function start() {
   await connectDB();
 
   const server = app.listen(env.port, () => {
-    console.log(`[server] MMWMS API running on http://localhost:${env.port} (${env.nodeEnv})`);
+    console.log(`[server] MessOps API running on http://localhost:${env.port} (${env.nodeEnv})`);
   });
 
   const websocket = require('./utils/websocket');

@@ -6,7 +6,7 @@ const settingsSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      default: 'نظام إدارة المستودعات والتموين العسكري (MMWMS)',
+      default: 'نظام عمليات المطاعم العسكرية (MessOps)',
     },
     unitCode: {
       type: String,

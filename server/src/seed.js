@@ -140,7 +140,8 @@ const ROLE_DEFS = [
 const DEFAULT_USERS = [
   {
     username: 'admin',
-    email: 'admin@mmwms.local',
+    email: 'admin@messops.local',
+
     displayName: 'Super Administrator',
     password: 'Admin@12345',
     roleKey: 'super_admin',
@@ -148,7 +149,8 @@ const DEFAULT_USERS = [
   },
   {
     username: 'warehouse.mgr',
-    email: 'warehouse.mgr@mmwms.local',
+    email: 'warehouse.mgr@messops.local',
+
     displayName: 'Warehouse Manager',
     password: 'Warehouse@12345',
     roleKey: 'warehouse_manager',
@@ -156,7 +158,8 @@ const DEFAULT_USERS = [
   },
   {
     username: 'store.keeper',
-    email: 'store.keeper@mmwms.local',
+    email: 'store.keeper@messops.local',
+
     displayName: 'Store Keeper',
     password: 'Store@12345',
     roleKey: 'store_keeper',
@@ -164,7 +167,7 @@ const DEFAULT_USERS = [
   },
   {
     username: 'mess.officer',
-    email: 'mess.officer@mmwms.local',
+    email: 'mess.officer@messops.local',
     displayName: 'Mess Officer',
     password: 'Mess@12345',
     roleKey: 'mess_officer',
