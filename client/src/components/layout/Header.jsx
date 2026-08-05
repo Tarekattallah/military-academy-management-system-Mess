@@ -3,17 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUiStore } from '../../lib/uiStore';
 import { Button } from '../ui/Button';
-import { Menu, LogOut, PanelLeftClose, PanelLeftOpen, User, Sun, Moon } from 'lucide-react';
+import { Menu, LogOut, PanelLeftClose, PanelLeftOpen, User, Sun, Moon, Languages } from 'lucide-react';
 import { NotificationBell } from './NotificationBell';
+import { useTranslation } from 'react-i18next';
 
 export function Header({ title }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { isSidebarCollapsed, toggleSidebar, setMobileSidebarOpen } = useUiStore();
+  const { t, i18n } = useTranslation();
 
   const [isDark, setIsDark] = useState(() => {
     return localStorage.getItem('theme') === 'dark' ||
-    !localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
   });
 
   useEffect(() => {
@@ -25,6 +27,30 @@ export function Header({ title }) {
       localStorage.setItem('theme', 'light');
     }
   }, [isDark]);
+
+  useEffect(() => {
+    const currentLang = i18n.language || 'ar';
+    document.documentElement.dir = currentLang === 'en' ? 'ltr' : 'rtl';
+    document.documentElement.lang = currentLang;
+  }, [i18n.language]);
+
+  const toggleLanguage = () => {
+    const nextLang = i18n.language === 'en' ? 'ar' : 'en';
+    i18n.changeLanguage(nextLang);
+    localStorage.setItem('language', nextLang);
+    document.documentElement.dir = nextLang === 'en' ? 'ltr' : 'rtl';
+    document.documentElement.lang = nextLang;
+    
+    // Auto-translate entire DOM using Google Translate widget
+    if (nextLang === 'en') {
+      document.cookie = `googtrans=/ar/en; path=/`;
+      document.cookie = `googtrans=/ar/en; path=/; domain=${location.hostname}`;
+    } else {
+      document.cookie = `googtrans=/ar/ar; path=/`;
+      document.cookie = `googtrans=/ar/ar; path=/; domain=${location.hostname}`;
+    }
+    window.location.reload();
+  };
 
   async function handleLogout() {
     await logout();
@@ -39,7 +65,6 @@ export function Header({ title }) {
         size="icon"
         className="lg:hidden"
         onClick={() => setMobileSidebarOpen(true)}>
-        
         <Menu className="size-5" />
       </Button>
 
@@ -49,10 +74,8 @@ export function Header({ title }) {
         size="icon"
         className="hidden lg:inline-flex"
         onClick={toggleSidebar}>
-        
         {isSidebarCollapsed ?
         <PanelLeftOpen className="size-4" /> :
-
         <PanelLeftClose className="size-4" />
         }
       </Button>
@@ -62,30 +85,38 @@ export function Header({ title }) {
 
       {/* User info & logout */}
       {user &&
-      <div className="flex items-center gap-1 sm:gap-3">
+        <div className="flex items-center gap-1 sm:gap-3">
           <div className="hidden sm:flex items-center gap-2">
             <div className="flex size-7 md:size-8 items-center justify-center rounded-full bg-primary">
               <User className="size-3 md:size-4 text-primary-foreground" />
             </div>
             <div className="text-sm hidden md:block">
               <p className="font-medium text-foreground text-xs md:text-sm">{user.displayName}</p>
-              <p className="text-xs text-muted-foreground hidden lg:block">{user.roles.join(', ') || 'بدون دور'}</p>
+              <p className="text-xs text-muted-foreground hidden lg:block">{user.roles.join(', ') || t('header.noRole')}</p>
             </div>
           </div>
           <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsDark(!isDark)}
-          title={isDark ? 'تفعيل الوضع المضيء' : 'تفعيل الوضع المظلم'}>
-          
+            variant="ghost"
+            size="sm"
+            onClick={toggleLanguage}
+            className="flex items-center gap-1 font-semibold"
+            title="تغيير اللغة / Change Language">
+            <Languages className="size-4 sm:size-5" />
+            <span className="inline-block">{t('header.language')}</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsDark(!isDark)}
+            title={isDark ? t('header.lightMode') : t('header.darkMode')}>
             {isDark ? <Sun className="size-4 sm:size-5 text-warning" /> : <Moon className="size-4 sm:size-5" />}
           </Button>
           <NotificationBell />
-          <Button variant="ghost" size="icon" onClick={handleLogout} title="تسجيل الخروج">
+          <Button variant="ghost" size="icon" onClick={handleLogout} title={t('header.logout')}>
             <LogOut className="size-4" />
           </Button>
         </div>
       }
-    </header>);
-
+    </header>
+  );
 }

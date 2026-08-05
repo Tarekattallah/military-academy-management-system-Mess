@@ -23,6 +23,7 @@ import {
 '../../lib/api/entities';
 
 import { Label } from '../../components/ui/Input';
+import { LogoLoader } from '../../components/ui/LogoLoader';
 
 const unitSchema = z.object({
   name: z.string().trim().min(1, 'الاسم مطلوب').max(50),
@@ -195,11 +196,7 @@ export function UnitsPage() {
         </CardHeader>
         <CardContent>
           {isLoading ?
-          <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) =>
-            <div key={i} className="h-10 animate-pulse rounded-md bg-secondary" />
-            )}
-            </div> :
+          <div className="py-12"><LogoLoader /></div> :
           error ?
           <div className="text-center text-destructive py-8 font-medium">فشل تحميل البيانات: {error.message}</div> :
           units.length === 0 ?

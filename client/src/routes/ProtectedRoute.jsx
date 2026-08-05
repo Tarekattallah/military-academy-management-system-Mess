@@ -1,11 +1,7 @@
 
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-
-
-
-
-
+import { LogoLoader } from '../components/ui/LogoLoader';
 
 export function ProtectedRoute({ children, requiredPermission }) {
   const { isAuthenticated, isLoading, hasPermission } = useAuth();
@@ -14,9 +10,8 @@ export function ProtectedRoute({ children, requiredPermission }) {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="font-mono text-sm uppercase tracking-widest text-muted-foreground">Loading…</p>
+        <LogoLoader size="xl" />
       </div>);
-
   }
 
   if (!isAuthenticated) {

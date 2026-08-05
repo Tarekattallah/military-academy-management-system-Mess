@@ -122,9 +122,9 @@ const reservationService = {
     const existingReservedByBatch = await getExistingReservationQuantitiesByBatch(warehouseId);
 
     // ── Execute FEFO allocation and creation atomically ────────────────────
-    const session = await mongoose.startSession();
+    const session = undefined; // await mongoose.startSession();
     try {
-      session.startTransaction();
+      // session.startTransaction();
 
       // ── FEFO Allocation: For each required ingredient, find batches ──────
       const reservationItems = [];
@@ -207,13 +207,13 @@ const reservationService = {
         items: reservationItems,
       }, session);
 
-      await session.commitTransaction();
+      // await session.commitTransaction();
       return reservationRepository.findById(reservation._id);
     } catch (err) {
-      await session.abortTransaction();
+      // await session.abortTransaction();
       throw err;
     } finally {
-      session.endSession();
+      // session.endSession();
     }
   },
 

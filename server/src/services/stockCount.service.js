@@ -126,9 +126,9 @@ const stockCountService = {
     }
 
     // ── Execute all operations atomically ──────────────────────────────────
-    const session = await mongoose.startSession();
+    const session = undefined; // await mongoose.startSession();
     try {
-      session.startTransaction();
+      // session.startTransaction();
 
       // ── Update status to approved ──────────────────────────────────────
       await stockCountRepository.updateById(
@@ -175,14 +175,14 @@ const stockCountService = {
         );
       }
 
-      await session.commitTransaction();
+      // await session.commitTransaction();
 
       return stockCountRepository.findById(id);
     } catch (err) {
-      await session.abortTransaction();
+      // await session.abortTransaction();
       throw err;
     } finally {
-      session.endSession();
+      // session.endSession();
     }
   },
 
@@ -236,9 +236,9 @@ const stockCountService = {
 
     if (stockCount.status === 'approved') {
       // ── Approved stock counts need inventory reversal ──────────────────
-      const session = await mongoose.startSession();
+      const session = undefined; // await mongoose.startSession();
       try {
-        session.startTransaction();
+        // session.startTransaction();
 
         // Reverse each adjustment
         for (const item of stockCount.items) {
@@ -285,13 +285,13 @@ const stockCountService = {
           session
         );
 
-        await session.commitTransaction();
+        // await session.commitTransaction();
         return stockCountRepository.findById(stockCount._id);
       } catch (err) {
-        await session.abortTransaction();
+        // await session.abortTransaction();
         throw err;
       } finally {
-        session.endSession();
+        // session.endSession();
       }
     }
 

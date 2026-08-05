@@ -143,9 +143,9 @@ const returnService = {
     const returnNumber = `RET-${datePart}-${String(count + 1).padStart(4, '0')}`;
 
     // ── Execute all operations atomically ──────────────────────────────────
-    const session = await mongoose.startSession();
+    const session = undefined; // await mongoose.startSession();
     try {
-      session.startTransaction();
+      // session.startTransaction();
 
       // ── Process each item first to build processedItems ──────────────────
       // We collect items before creating the Return document so it can be
@@ -220,15 +220,15 @@ const returnService = {
         await inventoryTransactionService.create(transactionData, { session });
       }
 
-      await session.commitTransaction();
+      // await session.commitTransaction();
 
       return returnRepository.findById(returnDoc._id);
 
     } catch (err) {
-      await session.abortTransaction();
+      // await session.abortTransaction();
       throw err;
     } finally {
-      session.endSession();
+      // session.endSession();
     }
   },
 
@@ -282,9 +282,9 @@ const returnService = {
       throw new AppError(`Cannot cancel a return with status "${returnDoc.status}". Only completed returns can be cancelled.`, 400);
     }
 
-    const session = await mongoose.startSession();
+    const session = undefined; // await mongoose.startSession();
     try {
-      session.startTransaction();
+      // session.startTransaction();
 
       // Determine the reversal transaction type
       // return_to_supplier is -1 (outbound), so reversal is +1
@@ -317,13 +317,13 @@ const returnService = {
           : `CANCELLED: ${reason || 'No reason provided'}`,
       }, session);
 
-      await session.commitTransaction();
+      // await session.commitTransaction();
       return returnRepository.findById(returnDoc._id);
     } catch (err) {
-      await session.abortTransaction();
+      // await session.abortTransaction();
       throw err;
     } finally {
-      session.endSession();
+      // session.endSession();
     }
   },
 };

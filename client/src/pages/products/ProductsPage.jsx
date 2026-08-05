@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { LogoLoader } from '../../components/ui/LogoLoader';
 import {
   getProducts,
   getCategories,
@@ -263,11 +264,7 @@ export function ProductsPage() {
         </CardHeader>
         <CardContent>
           {isLoading ?
-          <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) =>
-            <div key={i} className="h-10 animate-pulse rounded-md bg-secondary" />
-            )}
-            </div> :
+          <div className="py-12"><LogoLoader /></div> :
           error ?
           <div className="text-center text-destructive py-8 font-medium">فشل تحميل البيانات: {error.message}</div> :
           products.length === 0 ?

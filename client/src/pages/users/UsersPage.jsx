@@ -15,6 +15,7 @@ import { Input } from '../../components/ui/Input';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { AppLayout } from '../../components/layout/AppLayout';
 import { useAuth } from '../../contexts/AuthContext';
+import { LogoLoader } from '../../components/ui/LogoLoader';
 import {
   getUsers,
   createUser,
@@ -272,11 +273,7 @@ export function UsersPage() {
         </CardHeader>
         <CardContent>
           {isLoading ?
-          <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) =>
-            <div key={i} className="h-10 animate-pulse rounded-md bg-secondary" />
-            )}
-            </div> :
+          <div className="py-12"><LogoLoader /></div> :
           error ?
           <div className="text-center text-destructive py-8 font-medium">فشل تحميل البيانات: {error.message}</div> :
           users.length === 0 ?

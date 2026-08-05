@@ -16,6 +16,7 @@ import { FormField } from '../../components/ui/FormField';
 import { Input } from '../../components/ui/Input';
 import { SelectField } from '../../components/ui/SelectField';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { LogoLoader } from '../../components/ui/LogoLoader';
 import {
   getTransfers,
   getTransferById,
@@ -170,9 +171,13 @@ export function TransfersPage() {
     catch(() => toast.error('فشل تحميل تفاصيل التحويل'));
   }
 
-  function onSubmit(values) {
+  async function onSubmit(values) {
     if (!user) return;
-    createMutation.mutate(values);
+    try {
+      await createMutation.mutateAsync(values);
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   const filteredTransfers = transfers.filter((t) => {
@@ -299,11 +304,7 @@ export function TransfersPage() {
           </div>
 
           {isLoading ?
-          <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) =>
-            <div key={i} className="h-10 animate-pulse rounded-md bg-secondary" />
-            )}
-            </div> :
+          <div className="py-12"><LogoLoader /></div> :
           error ?
           <div className="text-center text-destructive py-8 font-medium">فشل تحميل البيانات: {error.message}</div> :
           filteredTransfers.length === 0 ?

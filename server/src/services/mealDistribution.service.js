@@ -169,9 +169,9 @@ const mealDistributionService = {
     }
 
     // ── Execute inventory deduction atomically ─────────────────────────────
-    const session = await mongoose.startSession();
+    const session = undefined; // await mongoose.startSession();
     try {
-      session.startTransaction();
+      // session.startTransaction();
 
       // ── Atomic status transition: prevent duplicate completion ──────────
       // Re-fetch the distribution inside the transaction with session.
@@ -274,14 +274,14 @@ const mealDistributionService = {
         { session }
       );
 
-      await session.commitTransaction();
+      // await session.commitTransaction();
 
       return mealDistributionRepository.findById(freshDistribution._id);
     } catch (err) {
-      await session.abortTransaction();
+      // await session.abortTransaction();
       throw err;
     } finally {
-      session.endSession();
+      // session.endSession();
     }
   },
 

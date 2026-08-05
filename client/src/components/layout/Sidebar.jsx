@@ -48,61 +48,60 @@ import {
 
 
 
-const NAV_CATEGORIES = [
+import { useTranslation } from 'react-i18next';
+
+const getNavCategories = (t) => [
 {
-  label: 'المخزون',
+  label: t('sidebar.inventory'),
   icon: Box,
   items: [
-  { to: '/products', label: 'المنتجات', icon: Package, permission: 'products:view' },
-  { to: '/categories', label: 'التصنيفات', icon: Tags, permission: 'categories:view' },
-  { to: '/units', label: 'الوحدات', icon: Ruler, permission: 'units:view' },
-  { to: '/suppliers', label: 'الموردين', icon: Truck, permission: 'suppliers:view' },
-  { to: '/warehouses', label: 'المستودعات', icon: Warehouse, permission: 'warehouses:view' }]
-
+  { to: '/products', label: t('sidebar.products'), icon: Package, permission: 'products:view' },
+  { to: '/categories', label: t('sidebar.categories'), icon: Tags, permission: 'categories:view' },
+  { to: '/units', label: t('sidebar.units'), icon: Ruler, permission: 'units:view' },
+  { to: '/suppliers', label: t('sidebar.suppliers'), icon: Truck, permission: 'suppliers:view' },
+  { to: '/warehouses', label: t('sidebar.warehouses'), icon: Warehouse, permission: 'warehouses:view' }]
 },
 {
-  label: 'المعاملات',
+  label: t('sidebar.transactions'),
   icon: Store,
   items: [
-  { to: '/receiving', label: 'استلام البضائع', icon: PackagePlus, permission: 'receiving:view' },
-  { to: '/transfers', label: 'التحويلات', icon: ArrowLeftRight, permission: 'transfers:view' },
-  { to: '/returns', label: 'المرتجعات', icon: Undo2, permission: 'returns:view' },
-  { to: '/waste', label: 'الهالك', icon: Trash2, permission: 'wastes:view' },
-  { to: '/stock-counts', label: 'جرد المخزون', icon: ClipboardList, permission: 'stock-counts:view' },
-  { to: '/batches', label: 'الدفعات', icon: Layers, permission: 'batches:view' },
-  { to: '/inventory', label: 'المخزون', icon: ClipboardCheck, permission: 'inventory-transactions:view' }]
-
+  { to: '/receiving', label: t('sidebar.receiving'), icon: PackagePlus, permission: 'receiving:view' },
+  { to: '/transfers', label: t('sidebar.transfers'), icon: ArrowLeftRight, permission: 'transfers:view' },
+  { to: '/returns', label: t('sidebar.returns'), icon: Undo2, permission: 'returns:view' },
+  { to: '/waste', label: t('sidebar.waste'), icon: Trash2, permission: 'wastes:view' },
+  { to: '/stock-counts', label: t('sidebar.stockCounts'), icon: ClipboardList, permission: 'stock-counts:view' },
+  { to: '/batches', label: t('sidebar.batches'), icon: Layers, permission: 'batches:view' },
+  { to: '/inventory', label: t('sidebar.inventory'), icon: ClipboardCheck, permission: 'inventory-transactions:view' }]
 },
 {
-  label: 'الوجبات',
+  label: t('sidebar.meals'),
   icon: Beef,
   items: [
-  { to: '/menus', label: 'قوائم الطعام', icon: UtensilsCrossed, permission: 'menus:view' },
-  { to: '/recipes', label: 'الوصفات', icon: BookOpen, permission: 'recipes:view' },
-  { to: '/meal-attendance', label: 'الحضور', icon: ClipboardPenLine, permission: 'meal-attendance:view' },
-  { to: '/meal-requests', label: 'طلبات الوجبات', icon: ClipboardMinus, permission: 'meal-requests:view' },
-  { to: '/reservations', label: 'الحجوزات', icon: CalendarCheck, permission: 'reservations:view' }]
-
+  { to: '/menus', label: t('sidebar.menus'), icon: UtensilsCrossed, permission: 'menus:view' },
+  { to: '/recipes', label: t('sidebar.recipes'), icon: BookOpen, permission: 'recipes:view' },
+  { to: '/meal-attendance', label: t('sidebar.attendance'), icon: ClipboardPenLine, permission: 'meal-attendance:view' },
+  { to: '/meal-requests', label: t('sidebar.mealRequests'), icon: ClipboardMinus, permission: 'meal-requests:view' },
+  { to: '/reservations', label: t('sidebar.reservations'), icon: CalendarCheck, permission: 'reservations:view' }]
 },
 {
-  label: 'الإدارة',
+  label: t('sidebar.admin'),
   icon: Building2,
   items: [
-  { to: '/', label: 'لوحة التحكم', icon: LayoutDashboard },
-  { to: '/notifications', label: 'الإشعارات', icon: Bell },
-  { to: '/users', label: 'المستخدمين', icon: Users, permission: 'users:view' },
-  { to: '/roles', label: 'الصلاحيات', icon: Shield, permission: 'roles:view' },
-  { to: '/reports', label: 'التقارير', icon: BarChart3, permission: 'reports:view' },
-  { to: '/settings', label: 'الإعدادات', icon: Settings, permission: 'settings:view' },
-  { to: '/audit-log', label: 'سجل النشاطات', icon: ScrollText, permission: 'settings:view' }]
-
+  { to: '/', label: t('sidebar.dashboard'), icon: LayoutDashboard },
+  { to: '/notifications', label: t('sidebar.notifications'), icon: Bell },
+  { to: '/users', label: t('sidebar.users'), icon: Users, permission: 'users:view' },
+  { to: '/roles', label: t('sidebar.roles'), icon: Shield, permission: 'roles:view' },
+  { to: '/reports', label: t('sidebar.reports'), icon: BarChart3, permission: 'reports:view' },
+  { to: '/settings', label: t('sidebar.settings'), icon: Settings, permission: 'settings:view' },
+  { to: '/audit-log', label: t('sidebar.auditLog'), icon: ScrollText, permission: 'settings:view' }]
 }];
 
-
 export function Sidebar() {
+  const { t } = useTranslation();
+  const NAV_CATEGORIES = getNavCategories(t);
   const { user, hasPermission } = useAuth();
   const { isSidebarCollapsed, isMobileSidebarOpen, setMobileSidebarOpen } = useUiStore();
-  const [expandedCategories, setExpandedCategories] = useState(new Set(['المخزون']));
+  const [expandedCategories, setExpandedCategories] = useState(new Set([t('sidebar.inventory')]));
 
   const toggleCategory = (label) => {
     setExpandedCategories((prev) => {
@@ -130,8 +129,8 @@ export function Sidebar() {
               <Warehouse className="size-5 text-sidebar-foreground" />
             </div>
              <div>
-               <p className="text-xs font-semibold leading-tight">MessOps</p>
-               <p className="text-[10px] leading-tight text-sidebar-muted">نظام عمليات المطاعم العسكرية</p>
+               <p className="text-xs font-semibold leading-tight">{t('sidebar.systemName')}</p>
+               <p className="text-[10px] leading-tight text-sidebar-muted">{t('sidebar.systemDesc')}</p>
              </div>
           </div>
       }
@@ -225,7 +224,7 @@ export function Sidebar() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{user.displayName}</p>
-                <p className="text-xs text-sidebar-muted truncate">{user.roles.join(', ') || 'بدون دور'}</p>
+                <p className="text-xs text-sidebar-muted truncate">{user.roles.join(', ') || t('header.noRole')}</p>
               </div>
             </div> :
 

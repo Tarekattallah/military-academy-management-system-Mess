@@ -65,9 +65,9 @@ const receivingService = {
     const receivingNumber = `RCV-${datePart}-${String(count + 1).padStart(4, '0')}`;
 
     // ── Execute all operations atomically ────────────────────────────────
-    const session = await mongoose.startSession();
+    const session = undefined; // await mongoose.startSession();
     try {
-      session.startTransaction();
+      // session.startTransaction();
 
       // ── Create the Receiving document (status: completed) ──────────────
       const receiving = await receivingRepository.create({
@@ -155,14 +155,14 @@ const receivingService = {
       receiving.items = processedItems;
       await receiving.save({ session });
 
-      await session.commitTransaction();
+      // await session.commitTransaction();
 
       return receivingRepository.findById(receiving._id);
     } catch (err) {
-      await session.abortTransaction();
+      // await session.abortTransaction();
       throw err;
     } finally {
-      session.endSession();
+      // session.endSession();
     }
   },
 
@@ -216,9 +216,9 @@ const receivingService = {
       throw new AppError(`Cannot cancel a receiving with status "${receiving.status}". Only completed receivings can be cancelled.`, 400);
     }
 
-    const session = await mongoose.startSession();
+    const session = undefined; // await mongoose.startSession();
     try {
-      session.startTransaction();
+      // session.startTransaction();
 
       // ── Process each item: reverse batch quantities ──────────────────────
       for (const item of receiving.items) {
@@ -273,13 +273,13 @@ const receivingService = {
           : `CANCELLED: ${reason || 'No reason provided'}`,
       }, session);
 
-      await session.commitTransaction();
+      // await session.commitTransaction();
       return receivingRepository.findById(receiving._id);
     } catch (err) {
-      await session.abortTransaction();
+      // await session.abortTransaction();
       throw err;
     } finally {
-      session.endSession();
+      // session.endSession();
     }
   },
 };

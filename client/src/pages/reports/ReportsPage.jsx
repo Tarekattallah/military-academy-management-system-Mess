@@ -9,6 +9,7 @@ import { Input } from '../../components/ui/Input';
 import { DataTable } from '../../components/ui/DataTable';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { AppLayout } from '../../components/layout/AppLayout';
+import { LogoLoader } from '../../components/ui/LogoLoader';
 import {
   getInventoryReport,
   getBatchReport,
@@ -302,11 +303,7 @@ export function ReportsPage() {
           </CardHeader>
           <CardContent>
             {isFetching ?
-            <div className="space-y-3">
-                {Array.from({ length: 5 }).map((_, i) =>
-              <div key={i} className="h-10 animate-pulse rounded-md bg-secondary" />
-              )}
-              </div> :
+            <div className="py-12"><LogoLoader /></div> :
             reportData.length === 0 ?
             <EmptyState title="لا توجد بيانات" description="لا توجد سجلات تطابق خيارات التصفية المحددة حالياً" /> :
 

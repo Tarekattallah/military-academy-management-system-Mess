@@ -17,6 +17,7 @@ import { FormField } from '../../components/ui/FormField';
 import { Input } from '../../components/ui/Input';
 import { SelectField } from '../../components/ui/SelectField';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { LogoLoader } from '../../components/ui/LogoLoader';
 import {
   getInventoryTransactions,
   getInventoryTransactionById,
@@ -203,13 +204,13 @@ export function InventoryPage() {
 
     }
   },
-  {
+{
     accessorKey: 'product',
     header: 'المنتج',
     cell: ({ row }) =>
     <div>
-          <p className="font-medium text-foreground">{row.original.product.name}</p>
-          <p className="text-xs text-muted-foreground font-mono">SKU: {row.original.product.sku}</p>
+          <p className="font-medium text-foreground">{row.original.product?.name || '—'}</p>
+          <p className="text-xs text-muted-foreground font-mono">SKU: {row.original.product?.sku || '—'}</p>
         </div>
 
   },
@@ -217,13 +218,13 @@ export function InventoryPage() {
     accessorKey: 'batch',
     header: 'الدفعة',
     cell: ({ row }) =>
-    <span className="font-mono text-xs">{row.original.batch.batchNumber}</span>
+    <span className="font-mono text-xs">{row.original.batch?.batchNumber || '—'}</span>
 
   },
   {
     accessorKey: 'warehouse',
     header: 'المستودع',
-    cell: ({ row }) => row.original.warehouse.name
+    cell: ({ row }) => row.original.warehouse?.name || '—'
   },
   {
     accessorKey: 'quantity',
@@ -232,16 +233,16 @@ export function InventoryPage() {
     <span className="font-mono">{row.original.quantity}</span>
 
   },
-  {
+{
     accessorKey: 'unitCost',
     header: 'التكلفة',
     cell: ({ row }) =>
-    `${row.original.totalCost.toFixed(2)} ر.س`
+    `${(row.original.totalCost ?? 0).toFixed(2)} ر.س`
   },
   {
     accessorKey: 'performedBy',
     header: 'بواسطة',
-    cell: ({ row }) => row.original.performedBy.displayName
+    cell: ({ row }) => row.original.performedBy?.displayName || '—'
   },
   {
     id: 'actions',
@@ -311,11 +312,7 @@ export function InventoryPage() {
           </div>
 
           {isLoading ?
-          <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) =>
-            <div key={i} className="h-10 animate-pulse rounded-md bg-secondary" />
-            )}
-            </div> :
+          <div className="py-12"><LogoLoader /></div> :
           error ?
           <div className="text-center text-destructive py-8 font-medium">فشل تحميل البيانات: {error.message}</div> :
           filteredTransactions.length === 0 ?
@@ -428,17 +425,17 @@ export function InventoryPage() {
                 <p className="text-xs text-muted-foreground">الوحدة النمطية</p>
                 <p className="text-sm font-medium">{MODULE_LABELS[viewTarget.module]}</p>
               </div>
-              <div>
+<div>
                 <p className="text-xs text-muted-foreground">المنتج</p>
-                <p className="text-sm font-medium">{viewTarget.product.name}</p>
+                <p className="text-sm font-medium">{viewTarget.product?.name || '—'}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">الدفعة</p>
-                <p className="text-sm font-mono">{viewTarget.batch.batchNumber}</p>
+                <p className="text-sm font-mono">{viewTarget.batch?.batchNumber || '—'}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">المستودع</p>
-                <p className="text-sm font-medium">{viewTarget.warehouse.name}</p>
+                <p className="text-sm font-medium">{viewTarget.warehouse?.name || '—'}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">الكمية</p>
@@ -446,15 +443,15 @@ export function InventoryPage() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">تكلفة الوحدة</p>
-                <p className="text-sm font-mono">{viewTarget.unitCost.toFixed(2)} ر.س</p>
+                <p className="text-sm font-mono">{(viewTarget.unitCost ?? 0).toFixed(2)} ر.س</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">التكلفة الإجمالية</p>
-                <p className="text-sm font-mono">{viewTarget.totalCost.toFixed(2)} ر.س</p>
+                <p className="text-sm font-mono">{(viewTarget.totalCost ?? 0).toFixed(2)} ر.س</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">بواسطة</p>
-                <p className="text-sm font-medium">{viewTarget.performedBy.displayName}</p>
+                <p className="text-sm font-medium">{viewTarget.performedBy?.displayName || '—'}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">التاريخ</p>

@@ -192,10 +192,7 @@ const inventoryTransactionService = {
       }
 
       // Standalone transaction (no parent session)
-      const session = await mongoose.startSession();
       try {
-        session.startTransaction();
-
         const transaction = await inventoryTransactionRepository.create({
           batch: batchId,
           product: productId,
@@ -210,21 +207,16 @@ const inventoryTransactionService = {
           reason,
           performedBy,
           notes,
-        }, session);
+        });
 
-        await updateBatchQuantity(batchId, transactionType, quantity, currentQuantity, session);
+        await updateBatchQuantity(batchId, transactionType, quantity, currentQuantity);
 
-        // Update CurrentStock read model within the same session
-        await currentStockService.updateFromTransaction(productId, warehouseId, session);
-
-        await session.commitTransaction();
+        // Update CurrentStock read model
+        await currentStockService.updateFromTransaction(productId, warehouseId);
 
         return inventoryTransactionRepository.findById(transaction._id);
       } catch (err) {
-        await session.abortTransaction();
         throw err;
-      } finally {
-        session.endSession();
       }
     }
 

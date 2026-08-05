@@ -104,46 +104,25 @@ const transferService = {
     const count = await Transfer.countDocuments();
     const transferNumber = `TRF-${datePart}-${String(count + 1).padStart(4, '0')}`;
 
-    // ── Execute all operations atomically ────────────────────────────────
-    const session = await mongoose.startSession();
+    // ── Execute all operations sequentially (No Transactions for local demo) ──
     try {
-      session.startTransaction();
-
-      // ── Process each item first to build processedItems ──────────────
-      // We process items before creating the Transfer document so that
-      // the document is created with a fully-populated items array,
-      // satisfying the 'at least one item' validator in one shot.
       const processedItems = [];
 
       for (const item of items) {
         const { product: productId, sourceBatch: sourceBatchId, destinationBatchNumber, quantity } = item;
         const trimmedDestinationBatchNumber = destinationBatchNumber.trim().toUpperCase();
 
-        // ── Determine unit cost from source batch ────────────────────────
-        // A transfer is an internal stock movement, NOT a procurement event.
-        // The unit cost of the goods being moved does NOT change when they
-        // are transferred between warehouses. We always use the source batch's
-        // unit cost for both the TRANSFER_OUT and TRANSFER_IN transactions.
         const effectiveUnitCost = sourceBatchMap[sourceBatchId] || 0;
 
-        // ── Step B: Find or create destination batch ────────────────────
-        // Look for existing batch with same product + destination warehouse + batch number
-        let destinationBatch = await batchRepository.findByIdentifier(productId, destinationWarehouseId, trimmedDestinationBatchNumber, session);
+        let destinationBatch = await batchRepository.findByIdentifier(productId, destinationWarehouseId, trimmedDestinationBatchNumber);
 
         if (destinationBatch) {
-          // Existing destination batch found. We do NOT update its unitCost
-          // because a transfer is an internal movement — the cost of goods
-          // already in this warehouse should not be overwritten. Only ensure
-          // the batch is active so TRANSFER_IN can add quantity.
           if (destinationBatch.status !== 'active') {
             destinationBatch = await batchRepository.updateById(destinationBatch._id, {
               status: 'active',
-            }, session);
+            });
           }
         } else {
-          // New destination batch. Set its unitCost to the source batch's
-          // unit cost (the true cost of the goods being moved). The
-          // availableQuantity starts at 0 — TRANSFER_IN will add the quantity.
           destinationBatch = await batchRepository.create({
             product: productId,
             warehouse: destinationWarehouseId,
@@ -153,7 +132,7 @@ const transferService = {
             reservedQuantity: 0,
             unitCost: effectiveUnitCost,
             notes: notes || undefined,
-          }, session);
+          });
         }
 
         const destinationBatchId = destinationBatch._id ? destinationBatch._id.toString() : destinationBatch.toString();
@@ -164,14 +143,10 @@ const transferService = {
           destinationBatchNumber: trimmedDestinationBatchNumber,
           quantity,
           unitCost: effectiveUnitCost,
-          // store destinationBatchId temporarily for transaction step below
           _destBatchId: destinationBatchId,
         });
       }
 
-      // ── Create the Transfer document with all items populated ─────────
-      // Creating with items already set avoids triggering the
-      // 'at least one item' validator with an empty array.
       const transfer = await transferRepository.create({
         transferNumber,
         sourceWarehouse: sourceWarehouseId,
@@ -181,15 +156,11 @@ const transferService = {
         notes,
         createdBy,
         items: processedItems.map(({ _destBatchId, ...rest }) => rest),
-      }, session);
+      });
 
-      // ── Create inventory transactions for each item ───────────────────
       for (const item of processedItems) {
         const { product: productId, sourceBatch: sourceBatchId, quantity, unitCost: effectiveUnitCost, _destBatchId: destinationBatchId } = item;
 
-        // ── Step A: Create TRANSFER_OUT transaction ──────────────────────
-        // Deducts from the source batch's availableQuantity using the
-        // source batch's original unit cost.
         const transferOutData = {
           batch: sourceBatchId,
           product: productId,
@@ -204,11 +175,8 @@ const transferService = {
           notes: notes || undefined,
         };
 
-        await inventoryTransactionService.create(transferOutData, { session });
+        await inventoryTransactionService.create(transferOutData);
 
-        // ── Step C: Create TRANSFER_IN transaction ──────────────────────
-        // Adds to the destination batch's availableQuantity using the same
-        // unit cost as the source batch (cost does not change on transfer).
         const transferInData = {
           batch: destinationBatchId,
           product: productId,
@@ -223,17 +191,12 @@ const transferService = {
           notes: notes || undefined,
         };
 
-        await inventoryTransactionService.create(transferInData, { session });
+        await inventoryTransactionService.create(transferInData);
       }
-
-      await session.commitTransaction();
 
       return transferRepository.findById(transfer._id);
     } catch (err) {
-      await session.abortTransaction();
       throw err;
-    } finally {
-      session.endSession();
     }
   },
 
@@ -286,9 +249,9 @@ const transferService = {
       throw new AppError(`Cannot cancel a transfer with status "${transfer.status}". Only completed transfers can be cancelled.`, 400);
     }
 
-    const session = await mongoose.startSession();
+    const session = undefined; // await mongoose.startSession();
     try {
-      session.startTransaction();
+      // session.startTransaction();
 
       for (const item of transfer.items) {
         const { product, sourceBatch, destinationBatchNumber, quantity } = item;
@@ -337,13 +300,13 @@ const transferService = {
           : `CANCELLED: ${reason || 'No reason provided'}`,
       }, session);
 
-      await session.commitTransaction();
+      // await session.commitTransaction();
       return transferRepository.findById(transfer._id);
     } catch (err) {
-      await session.abortTransaction();
+      // await session.abortTransaction();
       throw err;
     } finally {
-      session.endSession();
+      // session.endSession();
     }
   },
 };

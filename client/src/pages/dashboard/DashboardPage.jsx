@@ -6,6 +6,7 @@ import { DataTable } from '../../components/ui/DataTable';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import {
   getDashboardSummary,
   getDashboardInventory,
@@ -151,6 +152,7 @@ function ErrorCard({ message }) {
 // ── Analysis Section ──────────────────────────────────────────────────
 
 function AnalysisSection() {
+  const { t } = useTranslation();
   const { data: summary } = useQuery({ queryKey: ['dashboard', 'summary'], queryFn: getDashboardSummary });
   const { data: inventory } = useQuery({ queryKey: ['dashboard', 'inventory'], queryFn: getDashboardInventory });
   const { data: waste } = useQuery({ queryKey: ['dashboard', 'waste'], queryFn: getDashboardWaste });
@@ -173,11 +175,11 @@ function AnalysisSection() {
         </div>
         <div className="relative z-10 flex flex-col justify-between h-full">
           <div>
-            <p className="text-sm font-medium text-muted-foreground mb-1">مؤشر صحة المخزون</p>
+            <p className="text-sm font-medium text-muted-foreground mb-1">{t('dashboard.stockHealth')}</p>
             <h3 className="text-3xl font-bold text-indigo-600">{stockHealth}%</h3>
           </div>
           <div className="mt-4 text-xs text-muted-foreground flex items-center gap-1">
-            <TrendingUp className="size-3" /> نسبة الدفعات الصالحة للاستخدام
+            <TrendingUp className="size-3" /> {t('dashboard.healthDesc')}
           </div>
         </div>
       </div>
@@ -188,11 +190,11 @@ function AnalysisSection() {
         </div>
         <div className="relative z-10 flex flex-col justify-between h-full">
           <div>
-            <p className="text-sm font-medium text-muted-foreground mb-1">كفاءة الاستهلاك</p>
-            <h3 className="text-3xl font-bold text-emerald-600">{consumeMonth > 0 ? 'مثالية' : 'متوسطة'}</h3>
+            <p className="text-sm font-medium text-muted-foreground mb-1">{t('dashboard.efficiency')}</p>
+            <h3 className="text-3xl font-bold text-emerald-600">{consumeMonth > 0 ? t('dashboard.efficiencyIdeal') : t('dashboard.efficiencyAvg')}</h3>
           </div>
           <div className="mt-4 text-xs text-muted-foreground flex items-center gap-1">
-            <PieChart className="size-3" /> بناءً على معدلات السحب الشهري
+            <PieChart className="size-3" /> {t('dashboard.efficiencyDesc')}
           </div>
         </div>
       </div>
@@ -203,11 +205,11 @@ function AnalysisSection() {
         </div>
         <div className="relative z-10 flex flex-col justify-between h-full">
           <div>
-            <p className="text-sm font-medium text-muted-foreground mb-1">معدل الهالك للشهر</p>
+            <p className="text-sm font-medium text-muted-foreground mb-1">{t('dashboard.wasteRatio')}</p>
             <h3 className="text-3xl font-bold text-rose-600">{wasteRatio}%</h3>
           </div>
           <div className="mt-4 text-xs text-muted-foreground flex items-center gap-1">
-            <Activity className="size-3" /> نسبة الهالك إلى إجمالي الاستهلاك
+            <Activity className="size-3" /> {t('dashboard.wasteDesc')}
           </div>
         </div>
       </div>
@@ -512,37 +514,38 @@ function WarehouseSection() {
 // ── Role-based dashboards ────────────────────────────────────────────
 
 function SuperAdminDashboard() {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
-      <SectionCard title="لوحة التحليل الذكية" icon={Activity}>
+      <SectionCard title={t('dashboard.smartAnalysis')} icon={Activity}>
         <AnalysisSection />
       </SectionCard>
-      <SectionCard title="ملخص النظام" icon={Boxes}>
+      <SectionCard title={t('dashboard.systemSummary')} icon={Boxes}>
         <SummarySection />
       </SectionCard>
-      <SectionCard title="نظرة عامة على المخزون" icon={Layers}>
+      <SectionCard title={t('dashboard.inventoryOverview')} icon={Layers}>
         <InventorySection />
       </SectionCard>
-      <SectionCard title="عمليات اليوم" icon={PackagePlus}>
+      <SectionCard title={t('dashboard.todayOps')} icon={PackagePlus}>
         <TodaySection />
       </SectionCard>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <SectionCard title="الاستهلاك" icon={ShoppingCart}>
+        <SectionCard title={t('dashboard.consumption')} icon={ShoppingCart}>
           <ConsumptionSection />
         </SectionCard>
-        <SectionCard title="الهالك" icon={Trash2}>
+        <SectionCard title={t('dashboard.waste')} icon={Trash2}>
           <WasteSection />
         </SectionCard>
       </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <SectionCard title="الحجوزات" icon={CalendarCheck}>
+        <SectionCard title={t('dashboard.reservations')} icon={CalendarCheck}>
           <ReservationSection />
         </SectionCard>
-        <SectionCard title="التوزيعات" icon={UtensilsCrossed}>
+        <SectionCard title={t('dashboard.distributions')} icon={UtensilsCrossed}>
           <DistributionSection />
         </SectionCard>
       </div>
-      <SectionCard title="إحصائيات المستودعات" icon={Warehouse}>
+      <SectionCard title={t('dashboard.warehouseStats')} icon={Warehouse}>
         <WarehouseSection />
       </SectionCard>
     </div>
@@ -612,6 +615,7 @@ function MessOfficerDashboard() {
 
 export function DashboardPage() {
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   const role = user?.roles?.[0] || '';
 
@@ -627,10 +631,10 @@ export function DashboardPage() {
   SuperAdminDashboard;
 
   return (
-    <AppLayout title="لوحة التحكم">
+    <AppLayout title={t('dashboard.title')}>
       <div className="mb-6">
         <p className="text-sm text-muted-foreground">
-          مرحباً بعودتك، <span className="font-medium text-foreground">{user?.displayName}</span>.
+          {t('dashboard.welcome')} <span className="font-medium text-foreground">{user?.displayName}</span>.
         </p>
       </div>
 

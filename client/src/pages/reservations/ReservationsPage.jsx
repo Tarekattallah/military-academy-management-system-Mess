@@ -16,6 +16,7 @@ import { SelectField } from '../../components/ui/SelectField';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { AppLayout } from '../../components/layout/AppLayout';
 import { useAuth } from '../../contexts/AuthContext';
+import { LogoLoader } from '../../components/ui/LogoLoader';
 import {
   getReservations,
   createReservation,
@@ -221,11 +222,7 @@ export function ReservationsPage() {
         </CardHeader>
         <CardContent>
           {isLoading ?
-          <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) =>
-            <div key={i} className="h-10 animate-pulse rounded-md bg-secondary" />
-            )}
-            </div> :
+          <div className="py-12"><LogoLoader /></div> :
           error ?
           <div className="text-center text-destructive py-8 font-medium">فشل تحميل البيانات: {error.message}</div> :
           reservations.length === 0 ?

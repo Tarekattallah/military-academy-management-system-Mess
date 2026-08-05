@@ -96,9 +96,9 @@ const wasteService = {
     const wasteNumber = `WST-${datePart}-${String(count + 1).padStart(4, '0')}`;
 
     // ── Execute all operations atomically ──────────────────────────────────
-    const session = await mongoose.startSession();
+    const session = undefined; // await mongoose.startSession();
     try {
-      session.startTransaction();
+      // session.startTransaction();
 
       // ── Create the Waste document (status: completed) ────────────────────
       const waste = await wasteRepository.create({
@@ -147,14 +147,14 @@ const wasteService = {
       waste.items = processedItems;
       await waste.save({ session });
 
-      await session.commitTransaction();
+      // await session.commitTransaction();
 
       return wasteRepository.findById(waste._id);
     } catch (err) {
-      await session.abortTransaction();
+      // await session.abortTransaction();
       throw err;
     } finally {
-      session.endSession();
+      // session.endSession();
     }
   },
 
@@ -204,9 +204,9 @@ const wasteService = {
       throw new AppError(`Cannot cancel a waste record with status "${waste.status}". Only completed waste records can be cancelled.`, 400);
     }
 
-    const session = await mongoose.startSession();
+    const session = undefined; // await mongoose.startSession();
     try {
-      session.startTransaction();
+      // session.startTransaction();
 
       for (const item of waste.items) {
         const { product, batch: batchId, quantity } = item;
@@ -237,13 +237,13 @@ const wasteService = {
           : `CANCELLED: ${reason || 'No reason provided'}`,
       }, session);
 
-      await session.commitTransaction();
+      // await session.commitTransaction();
       return wasteRepository.findById(waste._id);
     } catch (err) {
-      await session.abortTransaction();
+      // await session.abortTransaction();
       throw err;
     } finally {
-      session.endSession();
+      // session.endSession();
     }
   },
 };
