@@ -56,18 +56,18 @@ The application is built using a modern decoupled architecture, featuring a Reac
 
 ```mermaid
 flowchart TD
-    subgraph Client [Frontend (React, Vite, TailwindCSS v4)]
-        UI[UI Components & Pages]
-        State[State (Zustand & React Query)]
+    subgraph Client [React Frontend]
+        UI[React Components]
+        State[State Management]
         UI <--> State
     end
 
-    subgraph API [Backend (Node.js & Express)]
+    subgraph API [Express Backend]
         Router[Express Router]
-        Auth[Auth & RBAC Middleware]
+        Auth[Auth Middleware]
         Controllers[Controllers]
-        Services[Business Logic Services]
-        Repositories[Data Repositories]
+        Services[Business Logic]
+        Repositories[Repositories]
         WS[WebSocket Server]
         
         Router --> Auth
@@ -76,12 +76,12 @@ flowchart TD
         Services --> Repositories
     end
     
-    subgraph DB [(Database)]
-        MongoDB[MongoDB / Mongoose]
+    subgraph DB [Database]
+        MongoDB[(MongoDB)]
     end
 
-    State -- "RESTful API (JSON)" --> Router
-    State -- "WebSockets" <--> WS
+    State -- REST API --> Router
+    State -- WebSockets <--> WS
     Repositories --> MongoDB
 ```
 
