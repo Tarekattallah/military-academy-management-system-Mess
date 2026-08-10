@@ -197,7 +197,7 @@ export function StockCountsPage() {
         <Button variant="ghost" size="icon" onClick={() => handleView(row.original._id)} title="عرض"><Eye className="size-4" /></Button>
         {canApprove && row.original.status === 'completed' &&
       <Button variant="ghost" size="icon" onClick={() => handleApprove(row.original._id)} title="اعتماد" isLoading={approveMutation.isPending}>
-            <CheckCircle className="size-4 text-green-600" />
+            <CheckCircle className="size-4 text-success" />
           </Button>
       }
         {canDelete && (row.original.status === 'completed' || row.original.status === 'approved') &&

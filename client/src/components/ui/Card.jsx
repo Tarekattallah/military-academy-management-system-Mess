@@ -15,7 +15,7 @@ export function CardHeader({ className = '', ...rest }) {
 
 export function CardTitle({ className = '', ...rest }) {
   return (
-    <p className={`text-sm font-medium text-muted-foreground ${className}`} {...rest} />);
+    <p className={`text-sm font-medium text-muted-foreground truncate ${className}`} {...rest} />);
 
 }
 

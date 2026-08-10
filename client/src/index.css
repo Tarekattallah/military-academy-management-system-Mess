@@ -101,13 +101,13 @@ img {
 }
 
 .dark {
-  --color-background: oklch(0.13 0.028 261);
+  --color-background: oklch(0.12 0.028 261);
   --color-foreground: oklch(0.98 0.005 261);
 
-  --color-card: oklch(0.17 0.025 261);
+  --color-card: oklch(0.15 0.025 261);
   --color-card-foreground: oklch(0.98 0.005 261);
 
-  --color-popover: oklch(0.17 0.025 261);
+  --color-popover: oklch(0.15 0.025 261);
   --color-popover-foreground: oklch(0.98 0.005 261);
 
   --color-primary: oklch(0.65 0.15 152);
@@ -117,7 +117,7 @@ img {
   --color-secondary-foreground: oklch(0.98 0.005 261);
 
   --color-muted: oklch(0.22 0.03 261);
-  --color-muted-foreground: oklch(0.7 0.02 261);
+  --color-muted-foreground: oklch(0.8 0.02 261);
 
   --color-accent: oklch(0.25 0.03 261);
   --color-accent-foreground: oklch(0.98 0.005 261);
@@ -131,8 +131,8 @@ img {
   --color-success: oklch(0.65 0.15 152);
   --color-success-foreground: oklch(0.1 0.02 152);
 
-  --color-border: oklch(0.25 0.03 261);
-  --color-input: oklch(0.25 0.03 261);
+  --color-border: oklch(0.3 0.03 261);
+  --color-input: oklch(0.3 0.03 261);
   --color-ring: oklch(0.65 0.15 152);
 
   --color-sidebar: oklch(0.11 0.02 261);
@@ -161,4 +161,10 @@ body {
 font {
   background: transparent !important;
   box-shadow: none !important;
+}
+
+/* Prevent long IDs, emails, codes from breaking layouts on small screens */
+table td, table th, p {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }

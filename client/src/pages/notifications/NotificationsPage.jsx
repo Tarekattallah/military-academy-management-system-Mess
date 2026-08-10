@@ -30,14 +30,14 @@ const TYPE_ICON = {
 
 const TYPE_COLOR = {
   error: 'text-destructive',
-  warning: 'text-amber-500',
-  info: 'text-blue-500'
+  warning: 'text-warning',
+  info: 'text-primary'
 };
 
 const TYPE_BG = {
   error: 'bg-destructive/10 border-destructive/20',
-  warning: 'bg-amber-500/10 border-amber-500/20',
-  info: 'bg-blue-500/10 border-blue-500/20'
+  warning: 'bg-warning/10 border-warning/20',
+  info: 'bg-primary/10 border-primary/20'
 };
 
 const CATEGORY_LABEL = {

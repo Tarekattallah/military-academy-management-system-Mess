@@ -23,14 +23,14 @@ const TYPE_ICON = {
 
 const TYPE_COLOR = {
   error: 'text-destructive',
-  warning: 'text-amber-500',
-  info: 'text-blue-500'
+  warning: 'text-warning',
+  info: 'text-primary'
 };
 
 const TYPE_BG = {
   error: 'bg-destructive/10 border-destructive/20',
-  warning: 'bg-amber-500/10 border-amber-500/20',
-  info: 'bg-blue-500/10 border-blue-500/20'
+  warning: 'bg-warning/10 border-warning/20',
+  info: 'bg-primary/10 border-primary/20'
 };
 
 export function NotificationBell() {
@@ -158,7 +158,7 @@ export function NotificationBell() {
         
         <Bell className="size-5" />
         {unreadCount > 0 &&
-        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white shadow-sm animate-pulse">
+        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground shadow-sm animate-pulse">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         }

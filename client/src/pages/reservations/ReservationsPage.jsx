@@ -255,7 +255,7 @@ export function ReservationsPage() {
             {canConsume && viewTarget?.status === 'reserved' &&
           <Button
             onClick={() => setConsumeId(viewTarget._id)}
-            className="bg-success hover:bg-success/90 text-white">
+            className="bg-success hover:bg-success/90 text-success-foreground">
             
                 تأكيد صرف واستهلاك المواد
               </Button>
@@ -365,7 +365,7 @@ export function ReservationsPage() {
             <Button
             onClick={() => consumeId && consumeMutation.mutate({ id: consumeId, notes: consumeNotes })}
             isLoading={consumeMutation.isPending}
-            className="bg-success hover:bg-success/90 text-white">
+            className="bg-success hover:bg-success/90 text-success-foreground">
             
               تأكيد الصرف
             </Button>
