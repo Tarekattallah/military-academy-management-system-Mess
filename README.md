@@ -1,74 +1,111 @@
-# MessOps — Military Mess Operations System
+# Military Academy Management System (MessOps)
 
-Batch-based inventory and meal management system for a military mess.
-Simple MVC architecture: **Node.js + Express + MongoDB (Mongoose)** on the
-backend, **React + TypeScript + Tailwind** on the frontend.
+MessOps is a comprehensive, production-grade Military Mess Operations and Warehouse Management System designed to streamline inventory tracking, meal planning, and daily food distribution. By bridging the gap between back-end procurement and front-end consumption, the system provides an end-to-end operational platform for managing warehouse stocks, daily menus, meal reservations, and real-time distribution across military facilities.
 
-## Stack
+## Overview
 
-- **Backend**: Node.js, Express, MongoDB, Mongoose, JavaScript (CommonJS), JWT (httpOnly cookies), Joi
-- **Frontend**: React, Vite, TypeScript, Tailwind CSS, Axios, TanStack Query, React Router
+The platform is designed to govern two main operational domains securely and efficiently:
+1. **Warehouse & Inventory**: Overseeing the complete lifecycle of goods, from initial supplier receiving to batch-level tracking, inter-warehouse transfers, stock counts, and waste management.
+2. **Mess & Meal Management**: Facilitating the planning of menus, ingredient-based recipes, user meal reservations, and the final tracking of meal distribution and actual consumption.
 
-Architecture (backend): `Controller → Service → Repository → Model`.
-Only repositories touch Mongoose models. All business logic lives in services.
+## Key Features
 
-## Prerequisites
+### Authentication & Security
+- **Authentication**: Secure login utilizing JSON Web Tokens (JWT) stored in HTTP-only cookies.
+- **RBAC (Role-Based Access Control)**: Granular role and permission management system dictating access levels across all modules.
+- **Protected Routes**: Enforced security on both Express API endpoints and React frontend routes.
+- **Audit Logging**: Comprehensive, automatic tracking of critical system actions and data mutations.
 
-- Node.js 18+
-- A running MongoDB instance (local or Atlas)
+### Warehouse & Inventory
+- **Multi-Warehouse Management**: Distinct tracking of current stock across multiple storage facilities.
+- **Catalog Management**: Structured management of Categories, Products, and measurement Units.
+- **Supplier Management**: Registry of approved suppliers for procurement.
+- **Batch Tracking**: Granular inventory control using batches, ensuring accurate expiration date and cost tracking.
+- **Goods Receiving**: Workflows for intaking new stock from suppliers into specific batches.
+- **Transfers & Returns**: Facilitating stock movement between warehouses and processing returns.
+- **Stock Counts & Waste**: Modules for conducting physical inventory checks, reconciliations, and logging spoiled or damaged goods.
+- **Inventory Transactions**: Immutable ledger of all movements affecting stock levels.
 
-## Setup
+### Mess & Meal Management
+- **Menus**: Planning daily meal offerings across varying meal times (breakfast, lunch, dinner).
+- **Recipes**: Detailed formulation of meals, tying specific menu items to the exact inventory products (ingredients) required for preparation.
 
-```bash
-# 1. Install everything (root, server, client)
-npm run install:all
+### Reservations & Distribution
+- **Meal Requests & Reservations**: Systems for individuals or units to book attendance for upcoming meals.
+- **Meal Distribution**: Real-time tracking interface to log actual attendance and food distribution during serving periods.
 
-# 2. Configure the backend environment
-cp server/.env.example server/.env
-# edit server/.env if your MongoDB URI, port, or JWT secret differ
+### Reporting & Dashboard
+- **Interactive Dashboard**: A centralized, real-time overview displaying KPIs such as current inventory value, today's meal metrics, recent waste alerts, and distribution statistics.
+- **Comprehensive Reports**: Dedicated analytics for:
+  - Inventory and Batch status
+  - Receiving and Transfers history
+  - Waste tracking
+  - Reservations vs. actual Meal Distributions
+  - Overall stock Consumption
 
-# 3. Seed initial roles/permissions/admin user
-npm run seed
-# creates username: admin / password: Admin@12345 — change it after first login
+### Notifications
+- **Real-Time Alerts**: Integrated WebSocket architecture providing instant notifications directly to the frontend client (via an interactive Notification Bell).
 
-# 4. Run both apps together
-npm run dev
+### Audit & Settings
+- **Audit Logs**: Queryable interfaces to review the history of user actions and system changes.
+- **System Settings**: Global configuration parameters adjustable by administrators.
+
+## System Architecture
+
+The application is built using a modern decoupled architecture, featuring a React/Vite frontend and a Node.js/Express backend communicating via RESTful APIs and WebSockets, backed by a MongoDB database.
+
+```mermaid
+flowchart TD
+    subgraph Client [Frontend (React, Vite, TailwindCSS v4)]
+        UI[UI Components & Pages]
+        State[State (Zustand & React Query)]
+        UI <--> State
+    end
+
+    subgraph API [Backend (Node.js & Express)]
+        Router[Express Router]
+        Auth[Auth & RBAC Middleware]
+        Controllers[Controllers]
+        Services[Business Logic Services]
+        Repositories[Data Repositories]
+        WS[WebSocket Server]
+        
+        Router --> Auth
+        Auth --> Controllers
+        Controllers --> Services
+        Services --> Repositories
+    end
+    
+    subgraph DB [(Database)]
+        MongoDB[MongoDB / Mongoose]
+    end
+
+    State -- "RESTful API (JSON)" --> Router
+    State -- "WebSockets" <--> WS
+    Repositories --> MongoDB
 ```
 
-- API: http://localhost:5000/api/v1
-- Web app: http://localhost:5173
+## Technology Stack
 
-You can also run each app independently with `npm run dev:server` or `npm run dev:client`.
+### Frontend
+- **Framework**: React 19 (via Vite)
+- **Styling**: Tailwind CSS v4, Radix UI primitives, Lucide React
+- **State Management**: Zustand, React Query (@tanstack/react-query)
+- **Forms & Validation**: React Hook Form, Zod
+- **Routing**: React Router DOM v7
+- **Internationalization**: i18next
 
-## Project structure
+### Backend
+- **Environment**: Node.js
+- **Framework**: Express.js
+- **Database**: MongoDB (via Mongoose)
+- **Validation**: Joi
+- **Security**: Helmet, bcrypt, JSON Web Tokens (JWT)
+- **Real-time**: WebSockets (`ws`)
 
-```
-server/
-  src/
-    config/         env + MongoDB connection
-    models/         Mongoose schemas
-    repositories/   only layer allowed to query models
-    services/       business logic
-    controllers/    HTTP request/response only
-    routes/
-    middlewares/    auth (JWT cookie), permission checks, validation, error handler
-    validations/    Joi schemas
-    utils/
-    seed.js         initial roles/permissions/admin user
-
-client/
-  src/
-    components/     ui/ (buttons, inputs, cards) and layout/ (sidebar, header, shell)
-    contexts/       AuthContext (login/logout/me, permission checks)
-    pages/
-    routes/
-    lib/            axios instance, query client
-```
-
-## Status
-
-Implemented so far: **Auth, Users, Roles, Permissions** (backend + basic frontend shell
-with login and a protected dashboard). Remaining domains (Products, Batches, Inventory
-Transactions, Goods Receiving, Excel Import, Transfers, Returns, Waste, Stock Count,
-Menus, Recipes, Meal Attendance, Meal Requests, Reservations, Notifications, Dashboard
-metrics, Reports, Settings) are being built module by module.
+### Backend Architecture Pattern
+The backend enforces a strict layered architecture to ensure separation of concerns:
+`Controller → Service → Repository → Model`
+- **Controllers**: Handle HTTP requests, responses, and routing.
+- **Services**: Contain all core business logic and cross-domain operations.
+- **Repositories**: The exclusive layer permitted to interact directly with Mongoose models.
