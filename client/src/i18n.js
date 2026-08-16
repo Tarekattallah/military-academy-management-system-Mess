@@ -36,7 +36,10 @@ const resources = {
         systemDesc: 'نظام عمليات المطاعم العسكرية'
       },
       userRoles: {
-        'Super Administrator': 'مدير عام النظام'
+        'Super Administrator': 'مدير عام النظام',
+        'Admin': 'مدير النظام',
+        'Administrator': 'مدير',
+        'Inventory Manager': 'مدير المستودع'
       },
       header: {
         darkMode: 'الوضع المظلم',

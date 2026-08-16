@@ -223,7 +223,7 @@ export function Sidebar() {
                 <User className="size-4 text-sidebar-foreground" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user.displayName}</p>
+                <p className="text-sm font-medium truncate">{t(`userRoles.${user.displayName}`, { defaultValue: user.displayName })}</p>
                 <p className="text-xs text-sidebar-muted truncate">{user.roles.map(r => t(`userRoles.${r}`, { defaultValue: r })).join(', ') || t('header.noRole')}</p>
               </div>
             </div> :
