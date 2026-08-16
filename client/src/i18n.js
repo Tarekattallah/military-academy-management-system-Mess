@@ -35,6 +35,9 @@ const resources = {
         systemName: 'MessOps',
         systemDesc: 'Military Mess Operations System'
       },
+      userRoles: {
+        'Super Administrator': 'Super Administrator'
+      },
       header: {
         darkMode: 'Dark Mode',
         lightMode: 'Light Mode',
@@ -97,6 +100,9 @@ const resources = {
         auditLog: 'سجل النشاطات',
         systemName: 'MessOps',
         systemDesc: 'نظام عمليات المطاعم العسكرية'
+      },
+      userRoles: {
+        'Super Administrator': 'مدير عام النظام'
       },
       header: {
         darkMode: 'الوضع المظلم',

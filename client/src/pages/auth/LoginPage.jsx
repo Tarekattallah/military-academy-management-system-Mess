@@ -61,7 +61,6 @@ export function LoginPage() {
               <Input
                 id="username"
                 autoComplete="username"
-                dir="auto"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="!bg-black/50 !border-white/20 !text-white !ring-primary/50 focus-visible:!border-primary !py-5"

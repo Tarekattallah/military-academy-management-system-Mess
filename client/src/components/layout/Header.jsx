@@ -92,7 +92,7 @@ export function Header({ title }) {
             </div>
             <div className="text-sm hidden md:block">
               <p className="font-medium text-foreground text-xs md:text-sm">{user.displayName}</p>
-              <p className="text-xs text-muted-foreground hidden lg:block">{user.roles.join(', ') || t('header.noRole')}</p>
+              <p className="text-xs text-muted-foreground hidden lg:block">{user.roles.map(r => t(`userRoles.${r}`, { defaultValue: r })).join(', ') || t('header.noRole')}</p>
             </div>
           </div>
           <Button
