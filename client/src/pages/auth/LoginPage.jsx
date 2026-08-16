@@ -37,7 +37,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="relative flex h-[100dvh] w-full flex-col bg-[url('/login-bg.png')] bg-cover bg-center bg-no-repeat px-4 font-['Cairo'] overflow-hidden">
+    <div className="relative flex h-[100dvh] w-full flex-col bg-[url('/login-bg.jpg')] bg-cover bg-center bg-no-repeat px-4 font-['Cairo'] overflow-hidden">
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/70"></div>
       
@@ -48,7 +48,7 @@ export function LoginPage() {
           
           {/* Logo Section */}
           <div className="flex flex-col items-center shrink-0">
-            <img src="/logo-full.png" alt="MessOps Logo" className="w-[180px] sm:w-[260px] md:w-[320px] lg:w-[380px] object-contain drop-shadow-2xl mix-blend-lighten" />
+            <img src="/logo-full-sm.png" alt="MessOps Logo" className="w-[180px] sm:w-[260px] md:w-[320px] lg:w-[380px] object-contain drop-shadow-2xl mix-blend-lighten" />
           </div>
 
           {/* Form Section */}
@@ -57,7 +57,7 @@ export function LoginPage() {
               
               <div className="text-center mb-4 sm:mb-6">
                 <div className="flex justify-center mb-1.5 sm:mb-3">
-                  <img src="/logo-text.png" alt="MessOps Text" className="h-3 sm:h-3.5 object-contain mix-blend-lighten drop-shadow-sm opacity-90" />
+                  <img src="/logo-text-sm.png" alt="MessOps Text" className="h-3 sm:h-3.5 object-contain mix-blend-lighten drop-shadow-sm opacity-90" />
                 </div>
                 <p className="text-[#c5a059] text-[10px] sm:text-[11px] font-semibold mb-0.5 sm:mb-1">مرحباً بك في</p>
                 <h1 className="text-sm sm:text-lg font-bold text-white mb-1 leading-relaxed">نظام إدارة عمليات الإطعام العسكري</h1>
