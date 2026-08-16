@@ -45,7 +45,7 @@ export function LoginPage() {
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-5 flex size-16 items-center justify-center rounded-2xl bg-black/40 backdrop-blur-md shadow-lg border border-white/10">
-            <Warehouse className="size-8 text-amber-500" />
+            <Warehouse className="size-8 text-primary" />
           </div>
           <h1 className="text-3xl font-bold text-white tracking-wide drop-shadow-md">
             MessOps
@@ -62,7 +62,7 @@ export function LoginPage() {
                 autoComplete="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="!bg-black/50 !border-white/20 !text-white !ring-amber-500/50 focus-visible:!border-amber-500 !py-5"
+                className="!bg-black/50 !border-white/20 !text-white !ring-primary/50 focus-visible:!border-primary !py-5"
                 required />
               
             </div>
@@ -75,7 +75,7 @@ export function LoginPage() {
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="!bg-black/50 !border-white/20 !text-white !ring-amber-500/50 focus-visible:!border-amber-500 !py-5"
+                className="!bg-black/50 !border-white/20 !text-white !ring-primary/50 focus-visible:!border-primary !py-5"
                 required />
               
             </div>
@@ -86,7 +86,7 @@ export function LoginPage() {
               </p>
             }
 
-            <Button type="submit" isLoading={isSubmitting} className="mt-4 w-full !bg-amber-600 hover:!bg-amber-700 !text-white !font-bold !rounded-xl !py-6 text-lg transition-all duration-300 shadow-lg hover:shadow-amber-600/20">
+            <Button type="submit" isLoading={isSubmitting} className="mt-4 w-full !bg-primary hover:!bg-primary/90 !text-primary-foreground !font-bold !rounded-xl !py-6 text-lg transition-all duration-300 shadow-lg hover:shadow-primary/20">
               تسجيل الدخول
             </Button>
           </form>
