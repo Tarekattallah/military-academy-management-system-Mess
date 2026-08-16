@@ -42,49 +42,51 @@ export function LoginPage() {
       {/* Dark overlay for better readability */}
       <div className="absolute inset-0 bg-black/60"></div>
       
-      <div className="relative z-10 w-full max-w-sm">
-        <div className="mb-6 text-center">
-          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-xl bg-sidebar-accent/80 backdrop-blur-sm shadow-sm border border-sidebar-border">
-            <Warehouse className="size-6 text-sidebar-foreground" />
+      <div className="relative z-10 w-full max-w-md">
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-5 flex size-16 items-center justify-center rounded-2xl bg-black/40 backdrop-blur-md shadow-lg border border-white/10">
+            <Warehouse className="size-8 text-amber-500" />
           </div>
-          <h1 className="text-2xl font-bold text-white drop-shadow-sm">
+          <h1 className="text-3xl font-bold text-white tracking-wide drop-shadow-md">
             MessOps
           </h1>
-          <p className="mt-1 text-sm text-gray-300 drop-shadow-sm">نظام عمليات المطاعم العسكرية</p>
+          <p className="mt-2 text-sm font-medium text-gray-300 tracking-wide drop-shadow-md">نظام عمليات المطاعم العسكرية</p>
         </div>
 
-        <Card className="p-6 shadow-xl border-sidebar-border/50 bg-card/95 backdrop-blur-sm">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <Card className="p-8 shadow-2xl !border-white/10 !bg-black/40 backdrop-blur-md rounded-2xl">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div>
-              <Label htmlFor="username">اسم المستخدم</Label>
+              <Label htmlFor="username" className="!text-gray-300 !font-bold">اسم المستخدم</Label>
               <Input
                 id="username"
                 autoComplete="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                className="!bg-black/50 !border-white/20 !text-white !ring-amber-500/50 focus-visible:!border-amber-500 !py-5"
                 required />
               
             </div>
 
             <div>
-              <Label htmlFor="password">كلمة المرور</Label>
+              <Label htmlFor="password" className="!text-gray-300 !font-bold">كلمة المرور</Label>
               <Input
                 id="password"
                 type="password"
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="!bg-black/50 !border-white/20 !text-white !ring-amber-500/50 focus-visible:!border-amber-500 !py-5"
                 required />
               
             </div>
 
             {error &&
-            <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <p className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-400 font-medium text-center">
                 {error}
               </p>
             }
 
-            <Button type="submit" isLoading={isSubmitting} className="mt-1 w-full">
+            <Button type="submit" isLoading={isSubmitting} className="mt-4 w-full !bg-amber-600 hover:!bg-amber-700 !text-white !font-bold !rounded-xl !py-6 text-lg transition-all duration-300 shadow-lg hover:shadow-amber-600/20">
               تسجيل الدخول
             </Button>
           </form>
