@@ -109,14 +109,7 @@ export function UsersPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => {
-      return updateUser(id, {
-        displayName: data.displayName,
-        email: data.email || undefined,
-        roles: data.roles,
-        status: data.status
-      });
-    },
+    mutationFn: ({ id, data }) => updateUser(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setOpen(false);
@@ -310,7 +303,7 @@ export function UsersPage() {
         
         {editing ?
         <form id="update-user-form" onSubmit={updateForm.handleSubmit((values) => handleUpdateSubmit(values))} className="space-y-4">
-            <FormField label="اسم المستخدم" error={updateForm.formState.errors.displayName?.message}>
+            <FormField label="اسم المستخدم">
               <Input value={editing.username} disabled />
             </FormField>
 
