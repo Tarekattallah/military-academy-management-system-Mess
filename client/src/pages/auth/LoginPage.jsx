@@ -38,19 +38,22 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-sidebar px-4">
-      <div className="w-full max-w-sm">
+    <div className="relative flex min-h-screen items-center justify-center bg-[url('/login.png')] bg-cover bg-center bg-no-repeat px-4">
+      {/* Dark overlay for better readability */}
+      <div className="absolute inset-0 bg-black/60"></div>
+      
+      <div className="relative z-10 w-full max-w-sm">
         <div className="mb-6 text-center">
-          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-xl bg-sidebar-accent">
+          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-xl bg-sidebar-accent/80 backdrop-blur-sm shadow-sm border border-sidebar-border">
             <Warehouse className="size-6 text-sidebar-foreground" />
           </div>
-          <h1 className="text-xl font-semibold text-sidebar-foreground">
+          <h1 className="text-2xl font-bold text-white drop-shadow-sm">
             MessOps
           </h1>
-          <p className="mt-1 text-sm text-sidebar-muted">نظام عمليات المطاعم العسكرية</p>
+          <p className="mt-1 text-sm text-gray-300 drop-shadow-sm">نظام عمليات المطاعم العسكرية</p>
         </div>
 
-        <Card className="p-6">
+        <Card className="p-6 shadow-xl border-sidebar-border/50 bg-card/95 backdrop-blur-sm">
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
               <Label htmlFor="username">اسم المستخدم</Label>
