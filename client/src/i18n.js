@@ -2,72 +2,6 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
 const resources = {
-  en: {
-    translation: {
-      sidebar: {
-        inventory: 'Inventory',
-        transactions: 'Transactions',
-        meals: 'Meals',
-        admin: 'Administration',
-        products: 'Products',
-        categories: 'Categories',
-        units: 'Units',
-        suppliers: 'Suppliers',
-        warehouses: 'Warehouses',
-        receiving: 'Receiving',
-        transfers: 'Transfers',
-        returns: 'Returns',
-        waste: 'Waste',
-        stockCounts: 'Stock Counts',
-        batches: 'Batches',
-        menus: 'Menus',
-        recipes: 'Recipes',
-        attendance: 'Attendance',
-        mealRequests: 'Meal Requests',
-        reservations: 'Reservations',
-        dashboard: 'Dashboard',
-        notifications: 'Notifications',
-        users: 'Users',
-        roles: 'Roles',
-        reports: 'Reports',
-        settings: 'Settings',
-        auditLog: 'Audit Log',
-        systemName: 'MessOps',
-        systemDesc: 'Military Mess Operations System'
-      },
-      userRoles: {
-        'Super Administrator': 'Super Administrator'
-      },
-      header: {
-        darkMode: 'Dark Mode',
-        lightMode: 'Light Mode',
-        logout: 'Logout',
-        noRole: 'No Role',
-        language: 'عربي'
-      },
-      dashboard: {
-        title: 'Dashboard',
-        welcome: 'Welcome back,',
-        smartAnalysis: 'Smart Analysis Board',
-        systemSummary: 'System Summary',
-        inventoryOverview: 'Inventory Overview',
-        todayOps: 'Today\'s Operations',
-        consumption: 'Consumption',
-        waste: 'Waste',
-        reservations: 'Reservations',
-        distributions: 'Distributions',
-        warehouseStats: 'Warehouse Statistics',
-        stockHealth: 'Stock Health Index',
-        healthDesc: 'Usable batches ratio',
-        efficiency: 'Consumption Efficiency',
-        efficiencyIdeal: 'Ideal',
-        efficiencyAvg: 'Average',
-        efficiencyDesc: 'Based on monthly withdrawal rates',
-        wasteRatio: 'Monthly Waste Ratio',
-        wasteDesc: 'Waste to total consumption ratio'
-      }
-    }
-  },
   ar: {
     translation: {
       sidebar: {
@@ -140,7 +74,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: localStorage.getItem('language') || 'ar',
+    lng: 'ar',
     fallbackLng: 'ar',
     interpolation: {
       escapeValue: false

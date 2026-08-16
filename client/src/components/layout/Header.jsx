@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUiStore } from '../../lib/uiStore';
 import { Button } from '../ui/Button';
-import { Menu, LogOut, PanelLeftClose, PanelLeftOpen, User, Sun, Moon, Languages } from 'lucide-react';
+import { Menu, LogOut, PanelLeftClose, PanelLeftOpen, User, Sun, Moon } from 'lucide-react';
 import { NotificationBell } from './NotificationBell';
 import { useTranslation } from 'react-i18next';
 
@@ -34,23 +34,7 @@ export function Header({ title }) {
     document.documentElement.lang = currentLang;
   }, [i18n.language]);
 
-  const toggleLanguage = () => {
-    const nextLang = i18n.language === 'en' ? 'ar' : 'en';
-    i18n.changeLanguage(nextLang);
-    localStorage.setItem('language', nextLang);
-    document.documentElement.dir = nextLang === 'en' ? 'ltr' : 'rtl';
-    document.documentElement.lang = nextLang;
-    
-    // Auto-translate entire DOM using Google Translate widget
-    if (nextLang === 'en') {
-      document.cookie = `googtrans=/ar/en; path=/`;
-      document.cookie = `googtrans=/ar/en; path=/; domain=${location.hostname}`;
-    } else {
-      document.cookie = `googtrans=/ar/ar; path=/`;
-      document.cookie = `googtrans=/ar/ar; path=/; domain=${location.hostname}`;
-    }
-    window.location.reload();
-  };
+
 
   async function handleLogout() {
     await logout();
@@ -95,15 +79,7 @@ export function Header({ title }) {
               <p className="text-xs text-muted-foreground hidden lg:block">{user.roles.map(r => t(`userRoles.${r}`, { defaultValue: r })).join(', ') || t('header.noRole')}</p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleLanguage}
-            className="flex items-center gap-1 font-semibold"
-            title="تغيير اللغة / Change Language">
-            <Languages className="size-4 sm:size-5" />
-            <span className="inline-block">{t('header.language')}</span>
-          </Button>
+
           <Button
             variant="ghost"
             size="icon"
