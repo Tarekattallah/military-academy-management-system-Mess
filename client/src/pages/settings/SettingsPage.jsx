@@ -21,13 +21,11 @@ export function SettingsPage() {
 
   const [appName, setAppName] = useState('نظام عمليات المطاعم العسكرية (MessOps)');
   const [unitCode, setUnitCode] = useState('SEC-MIL-HQ-01');
-  const [language, setLanguage] = useState('ar');
 
   useEffect(() => {
     if (settings) {
       setAppName(settings.appName);
       setUnitCode(settings.unitCode);
-      setLanguage(settings.language);
     }
   }, [settings]);
 
@@ -37,7 +35,6 @@ export function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ['system-settings'] });
       localStorage.setItem('messops_app_name', data.appName);
       localStorage.setItem('messops_unit_code', data.unitCode);
-      localStorage.setItem('messops_language', data.language);
       toast.success('تم حفظ إعدادات النظام العامة بنجاح');
     },
     onError: (err) => {
@@ -47,7 +44,7 @@ export function SettingsPage() {
 
   function handleSaveGeneral(e) {
     e.preventDefault();
-    updateMutation.mutate({ appName, unitCode, language: language });
+    updateMutation.mutate({ appName, unitCode });
   }
 
   function handleClearCache() {
@@ -74,18 +71,6 @@ export function SettingsPage() {
 
               <FormField label="رمز الجهة العسكرية / الوحدة الرئيسية">
                 <Input value={unitCode} onChange={(e) => setUnitCode(e.target.value)} disabled={isLoading || updateMutation.isPending} />
-              </FormField>
-
-              <FormField label="لغة واجهة المستخدم">
-                <select
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  disabled={isLoading || updateMutation.isPending}
-                  className="flex h-9 w-full rounded-md border border-input bg-card px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring">
-                  
-                  <option value="ar">العربية (الأصلية)</option>
-                  <option value="en">English (الانجليزية)</option>
-                </select>
               </FormField>
 
               <div className="flex justify-end pt-2">
