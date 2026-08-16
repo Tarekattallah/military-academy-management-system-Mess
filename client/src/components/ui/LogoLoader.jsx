@@ -14,11 +14,11 @@ export function LogoLoader({ className = '', size = 'lg' }) {
     <div className={`flex flex-col items-center justify-center gap-4 ${className}`}>
       <div className="relative">
         <img 
-          src="/favicon.jpg" 
+          src="/logo-shield.png" 
           alt="Loading..." 
-          className={`${imgSize} animate-pulse rounded-xl object-contain shadow-sm border border-border/50`}
+          className={`${imgSize} animate-pulse object-contain drop-shadow-md`}
         />
-        <div className="absolute inset-0 animate-ping rounded-xl border-2 border-primary/40 opacity-20" style={{ animationDuration: '2s' }}></div>
+        <div className="absolute inset-0 animate-ping rounded-full border-2 border-primary/40 opacity-20" style={{ animationDuration: '2s' }}></div>
       </div>
       {size !== 'sm' && (
         <p className="font-mono text-sm uppercase tracking-widest text-muted-foreground animate-pulse" style={{ animationDuration: '1.5s' }}>

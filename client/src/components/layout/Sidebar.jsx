@@ -52,6 +52,18 @@ import { useTranslation } from 'react-i18next';
 
 const getNavCategories = (t) => [
 {
+  label: t('sidebar.admin'),
+  icon: Building2,
+  items: [
+  { to: '/', label: t('sidebar.dashboard'), icon: LayoutDashboard },
+  { to: '/notifications', label: t('sidebar.notifications'), icon: Bell },
+  { to: '/users', label: t('sidebar.users'), icon: Users, permission: 'users:view' },
+  { to: '/roles', label: t('sidebar.roles'), icon: Shield, permission: 'roles:view' },
+  { to: '/reports', label: t('sidebar.reports'), icon: BarChart3, permission: 'reports:view' },
+  { to: '/settings', label: t('sidebar.settings'), icon: Settings, permission: 'settings:view' },
+  { to: '/audit-log', label: t('sidebar.auditLog'), icon: ScrollText, permission: 'settings:view' }]
+},
+{
   label: t('sidebar.inventory'),
   icon: Box,
   items: [
@@ -82,18 +94,6 @@ const getNavCategories = (t) => [
   { to: '/meal-attendance', label: t('sidebar.attendance'), icon: ClipboardPenLine, permission: 'meal-attendance:view' },
   { to: '/meal-requests', label: t('sidebar.mealRequests'), icon: ClipboardMinus, permission: 'meal-requests:view' },
   { to: '/reservations', label: t('sidebar.reservations'), icon: CalendarCheck, permission: 'reservations:view' }]
-},
-{
-  label: t('sidebar.admin'),
-  icon: Building2,
-  items: [
-  { to: '/', label: t('sidebar.dashboard'), icon: LayoutDashboard },
-  { to: '/notifications', label: t('sidebar.notifications'), icon: Bell },
-  { to: '/users', label: t('sidebar.users'), icon: Users, permission: 'users:view' },
-  { to: '/roles', label: t('sidebar.roles'), icon: Shield, permission: 'roles:view' },
-  { to: '/reports', label: t('sidebar.reports'), icon: BarChart3, permission: 'reports:view' },
-  { to: '/settings', label: t('sidebar.settings'), icon: Settings, permission: 'settings:view' },
-  { to: '/audit-log', label: t('sidebar.auditLog'), icon: ScrollText, permission: 'settings:view' }]
 }];
 
 export function Sidebar() {
@@ -101,7 +101,7 @@ export function Sidebar() {
   const NAV_CATEGORIES = getNavCategories(t);
   const { user, hasPermission } = useAuth();
   const { isSidebarCollapsed, isMobileSidebarOpen, setMobileSidebarOpen } = useUiStore();
-  const [expandedCategories, setExpandedCategories] = useState(new Set([t('sidebar.inventory')]));
+  const [expandedCategories, setExpandedCategories] = useState(new Set([t('sidebar.admin')]));
 
   const toggleCategory = (label) => {
     setExpandedCategories((prev) => {
@@ -125,8 +125,8 @@ export function Sidebar() {
       <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-3">
         {!isSidebarCollapsed &&
       <div className="flex items-center gap-2">
-            <div className="flex size-8 items-center justify-center rounded-md bg-sidebar-accent">
-              <Warehouse className="size-5 text-sidebar-foreground" />
+            <div className="flex size-8 items-center justify-center">
+              <img src="/logo-shield.png" alt="Logo" className="size-8 object-contain drop-shadow-sm" />
             </div>
              <div>
                <p className="text-xs font-semibold leading-tight">{t('sidebar.systemName')}</p>
@@ -135,8 +135,8 @@ export function Sidebar() {
           </div>
       }
         {isSidebarCollapsed &&
-      <div className="mx-auto flex size-8 items-center justify-center rounded-md bg-sidebar-accent">
-            <Warehouse className="size-5 text-sidebar-foreground" />
+      <div className="mx-auto flex size-8 items-center justify-center">
+            <img src="/logo-shield.png" alt="Logo" className="size-8 object-contain drop-shadow-sm" />
           </div>
       }
       </div>
