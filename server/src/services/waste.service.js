@@ -5,6 +5,7 @@ const inventoryTransactionService = require('./inventoryTransaction.service');
 const Product = require('../models/product.model');
 const Warehouse = require('../models/warehouse.model');
 const Waste = require('../models/waste.model');
+const dailyClosingService = require('./dailyClosing.service');
 const AppError = require('../utils/AppError');
 
 const wasteService = {
@@ -35,6 +36,9 @@ const wasteService = {
     if (!reason || !reason.trim()) {
       throw new AppError('Waste reason is required', 400);
     }
+
+    const opDate = wasteDate || new Date();
+    await dailyClosingService.assertOperationalDayWritable(warehouseId, opDate);
 
     // ── Validate warehouse exists and is active ───────────────────────────
     const warehouse = await Warehouse.findById(warehouseId);
@@ -109,7 +113,7 @@ const wasteService = {
         notes,
         createdBy,
         status: 'completed',
-        items: [], // items added below
+        items: items.map(i => ({ product: i.product, batch: i.batch, quantity: i.quantity })),
       }, session);
 
       // ── Process each item ─────────────────────────────────────────────
@@ -203,6 +207,9 @@ const wasteService = {
     if (waste.status !== 'completed') {
       throw new AppError(`Cannot cancel a waste record with status "${waste.status}". Only completed waste records can be cancelled.`, 400);
     }
+
+    const whId = waste.warehouse._id ? waste.warehouse._id.toString() : waste.warehouse.toString();
+    await dailyClosingService.assertOperationalDayWritable(whId, waste.wasteDate);
 
     const session = undefined; // await mongoose.startSession();
     try {

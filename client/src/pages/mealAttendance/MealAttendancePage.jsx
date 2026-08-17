@@ -40,13 +40,29 @@ const completeItemSchema = z.object({
   productName: z.string(),
   batchNumber: z.string(),
   plannedQuantity: z.number(),
+  issuedQuantity: z.coerce.number().min(0, 'الكمية المنصرفة يجب أن تكون 0 أو أكثر'),
   actualQuantity: z.coerce.number().min(0, 'الكمية المستهلكة يجب أن تكون 0 أو أكثر'),
-  wastageQuantity: z.coerce.number().min(0, 'كمية الهدر يجب أن تكون 0 أو أكثر')
+  wastageQuantity: z.coerce.number().min(0, 'كمية الهدر يجب أن تكون 0 أو أكثر'),
+  returnedQuantity: z.coerce.number().min(0, 'الكمية المرتجعة يجب أن تكون 0 أو أكثر')
+}).refine(data => data.issuedQuantity <= data.plannedQuantity, {
+  message: 'الكمية المنصرفة للمطبخ لا يمكن أن تتجاوز المخطط',
+  path: ['issuedQuantity']
+}).refine(data => {
+  const accounted = data.actualQuantity + data.wastageQuantity + data.returnedQuantity;
+  return Math.abs(data.issuedQuantity - accounted) < 0.001;
+}, {
+  message: 'خطأ: المنصرف يجب أن يساوي (المستهلك + الهدر + المرتجع)',
+  path: ['issuedQuantity']
 });
 
 const completeSchema = z.object({
   notes: z.string().trim().optional().default(''),
+  plannedServings: z.number().optional(),
+  actualServings: z.coerce.number().min(0, 'يجب أن يكون العدد الفعلي للوجبات 0 أو أكثر'),
   items: z.array(completeItemSchema)
+}).refine(data => data.actualServings <= (data.plannedServings || 0), {
+  message: 'العدد الفعلي للوجبات لا يمكن أن يتجاوز العدد المخطط',
+  path: ['actualServings']
 });
 
 
@@ -146,14 +162,18 @@ export function MealAttendancePage() {
   function handleOpenComplete(dist) {
     completeForm.reset({
       notes: dist.notes || '',
+      plannedServings: dist.plannedServings || 0,
+      actualServings: dist.plannedServings || 0, // default to planned
       items: dist.items.map((item) => ({
         product: item.product?._id || item.product,
         batch: item.batch?._id || item.batch,
         productName: item.product?.name || 'منتج',
         batchNumber: item.batch?.batchNumber || 'دفعة',
         plannedQuantity: item.plannedQuantity,
-        actualQuantity: item.plannedQuantity, // default to planned
-        wastageQuantity: 0
+        issuedQuantity: item.plannedQuantity, // default issued to planned
+        actualQuantity: item.plannedQuantity, // default actual to planned
+        wastageQuantity: 0,
+        returnedQuantity: 0
       }))
     });
     setCompleteTarget(dist);
@@ -168,11 +188,14 @@ export function MealAttendancePage() {
     completeMutation.mutate({
       id: completeTarget._id,
       data: {
+        actualServings: values.actualServings,
         items: values.items.map((it) => ({
           product: it.product,
           batch: it.batch,
+          issuedQuantity: it.issuedQuantity,
           actualQuantity: it.actualQuantity,
-          wastageQuantity: it.wastageQuantity
+          wastageQuantity: it.wastageQuantity,
+          returnedQuantity: it.returnedQuantity
         })),
         notes: values.notes
       }
@@ -331,7 +354,51 @@ export function MealAttendancePage() {
             }
             </div>
 
-            <div>
+            {/* Cost Snapshot Section */}
+            {viewTarget.status === 'completed' && viewTarget.totalStandardCost !== undefined && (
+              <div className="mt-4 p-4 bg-secondary/30 border border-border rounded-md">
+                <h3 className="text-sm font-bold text-foreground mb-3 flex items-center justify-between border-b border-border pb-2">
+                  <span>تحليل التكاليف (Cost Snapshot)</span>
+                  <Badge variant={viewTarget.varianceAmount > 0 ? 'destructive' : 'success'}>
+                    انحراف: {viewTarget.variancePercentage?.toLocaleString('ar-EG', { maximumFractionDigits: 1 })}%
+                  </Badge>
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <span className="block text-[10px] text-muted-foreground font-medium mb-1">إجمالي التكلفة المعيارية</span>
+                    <span className="font-mono text-sm font-semibold">{viewTarget.totalStandardCost?.toLocaleString('ar-EG')} ج.م</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] text-muted-foreground font-medium mb-1">إجمالي التكلفة الفعلية (الاستهلاك)</span>
+                    <span className="font-mono text-sm font-semibold text-primary">{viewTarget.totalActualCost?.toLocaleString('ar-EG')} ج.م</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] text-muted-foreground font-medium mb-1">تكلفة الهدر</span>
+                    <span className="font-mono text-sm font-semibold text-destructive">{viewTarget.totalWasteCost?.toLocaleString('ar-EG')} ج.م</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] text-muted-foreground font-medium mb-1">التكلفة التشغيلية (الفعلي + الهدر)</span>
+                    <span className="font-mono text-sm font-semibold text-orange-600">{(viewTarget.totalActualCost + viewTarget.totalWasteCost)?.toLocaleString('ar-EG')} ج.م</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] text-muted-foreground font-medium mb-1">التكلفة المعيارية للفرد</span>
+                    <span className="font-mono text-sm font-medium">{viewTarget.standardCostPerServing?.toLocaleString('ar-EG', { maximumFractionDigits: 2 })} ج.م</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] text-muted-foreground font-medium mb-1">التكلفة الفعلية للفرد</span>
+                    <span className="font-mono text-sm font-medium">{viewTarget.actualCostPerServing?.toLocaleString('ar-EG', { maximumFractionDigits: 2 })} ج.م</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="block text-[10px] text-muted-foreground font-medium mb-1">قيمة الانحراف (الفعلي - المعياري)</span>
+                    <span className={`font-mono text-sm font-bold ${viewTarget.varianceAmount > 0 ? 'text-destructive' : 'text-success'}`}>
+                      {viewTarget.varianceAmount > 0 ? '+' : ''}{viewTarget.varianceAmount?.toLocaleString('ar-EG')} ج.م
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-4">
               <h3 className="text-sm font-bold text-foreground mb-2">الأصناف المحضرة والمواد المستهلكة</h3>
               <div className="border border-border rounded-md divide-y divide-border overflow-x-auto">
                 <table className="w-full text-sm text-right text-foreground">
@@ -448,11 +515,34 @@ export function MealAttendancePage() {
         }>
         
         <form id="complete-form" onSubmit={completeForm.handleSubmit(onSubmitComplete)} className="space-y-4">
+          
+          <div className="grid grid-cols-2 gap-4 bg-primary/5 p-4 rounded-lg border border-primary/20">
+            <div>
+              <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">عدد الوجبات المخطط</span>
+              <span className="font-mono text-2xl font-bold text-foreground">
+                {completeTarget?.plannedServings?.toLocaleString('ar-EG') || '0'}
+              </span>
+            </div>
+            <div>
+              <FormField 
+                label="عدد الوجبات الموزعة فعلياً" 
+                error={completeForm.formState.errors.actualServings?.message}
+                required
+              >
+                <Input 
+                  type="number" 
+                  className="font-mono text-lg bg-background"
+                  {...completeForm.register('actualServings')} 
+                />
+              </FormField>
+            </div>
+          </div>
+
           <FormField label="ملاحظات عامة حول التوزيع" error={completeForm.formState.errors.notes?.message}>
             <Input {...completeForm.register('notes')} placeholder="مثال: تم إكمال توزيع الحصص لجميع الأفراد بنجاح" />
           </FormField>
 
-          <div className="space-y-3">
+          <div className="space-y-3 mt-4">
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block border-b border-border pb-1">
               تسجيل كميات الاستهلاك والهدر لكل صنف
             </label>
@@ -467,40 +557,61 @@ export function MealAttendancePage() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 items-end">
+                  <div className="grid grid-cols-5 gap-2 items-start">
                     <div>
                       <span className="block text-[10px] text-muted-foreground font-medium mb-1">المخطط</span>
-                      <span className="font-mono text-sm block h-9 leading-9 font-semibold text-primary">
+                      <span className="font-mono text-sm block h-9 leading-9 font-semibold text-primary border rounded-md px-3 bg-background flex items-center">
                         {field.plannedQuantity.toLocaleString('ar-EG')}
                       </span>
                     </div>
 
                     <div>
                       <FormField
-                      label="الموزع الفعلي"
-                      error={completeForm.formState.errors.items?.[index]?.actualQuantity?.message}>
-                      
+                      label="المنصرف للمطبخ"
+                      error={completeForm.formState.errors.items?.[index]?.issuedQuantity?.message}>
                         <Input
                         type="number"
                         step="0.01"
-                        {...completeForm.register(`items.${index}.actualQuantity`)} />
-                      
+                        {...completeForm.register(`items.${index}.issuedQuantity`)} />
                       </FormField>
                     </div>
 
                     <div>
                       <FormField
-                      label="الهدر"
+                      label="المستهلك (Actual)"
+                      error={completeForm.formState.errors.items?.[index]?.actualQuantity?.message}>
+                        <Input
+                        type="number"
+                        step="0.01"
+                        {...completeForm.register(`items.${index}.actualQuantity`)} />
+                      </FormField>
+                    </div>
+
+                    <div>
+                      <FormField
+                      label="الهدر (Waste)"
                       error={completeForm.formState.errors.items?.[index]?.wastageQuantity?.message}>
-                      
                         <Input
                         type="number"
                         step="0.01"
                         {...completeForm.register(`items.${index}.wastageQuantity`)} />
-                      
+                      </FormField>
+                    </div>
+                    
+                    <div>
+                      <FormField
+                      label="المرتجع (Returned)"
+                      error={completeForm.formState.errors.items?.[index]?.returnedQuantity?.message}>
+                        <Input
+                        type="number"
+                        step="0.01"
+                        {...completeForm.register(`items.${index}.returnedQuantity`)} />
                       </FormField>
                     </div>
                   </div>
+                  <p className="text-[10px] text-muted-foreground/80 leading-tight mt-2 text-center bg-primary/5 p-1 rounded">
+                    يجب أن يكون: المنصرف = المستهلك + الهدر + المرتجع (المرتجع سيبقى في المستودع)
+                  </p>
                 </div>
               )}
             </div>

@@ -193,6 +193,18 @@ const reservationService = {
       const count = await Reservation.countDocuments();
       const reservationNumber = `RSV-${datePart}-${String(count + 1).padStart(4, '0')}`;
 
+      // ── Determine operational date ─────────────────────────────────────────
+      let operationalDate;
+      if (mealRequest.menu && mealRequest.menu.menuDate) {
+        operationalDate = mealRequest.menu.menuDate;
+      } else if (mealRequest.requestDate) {
+        operationalDate = mealRequest.requestDate;
+      }
+
+      if (!operationalDate) {
+        throw new AppError('Reservation operational date could not be determined from the Meal Request.', 400);
+      }
+
       // ── Create the reservation (status: reserved) ────────────────────────
       const reservation = await reservationRepository.create({
         reservationNumber,
@@ -200,6 +212,7 @@ const reservationService = {
         warehouse: warehouseId,
         requestingUnit: mealRequest.requestingUnit,
         menu: mealRequest.menu,
+        operationalDate,
         status: 'reserved',
         reservedBy,
         reservedAt: new Date(),

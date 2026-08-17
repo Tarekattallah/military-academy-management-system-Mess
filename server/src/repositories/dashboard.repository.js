@@ -4,6 +4,7 @@ const Warehouse = require('../models/warehouse.model');
 const Supplier = require('../models/supplier.model');
 const Recipe = require('../models/recipe.model');
 const Menu = require('../models/menu.model');
+const MealRequest = require('../models/mealRequest.model');
 const Reservation = require('../models/reservation.model');
 const MealDistribution = require('../models/mealDistribution.model');
 const CurrentStock = require('../models/currentStock.model');
@@ -137,6 +138,48 @@ const dashboardRepository = {
     });
   },
 
+  // ── Cost Analytics ───────────────────────────────────────────────────────
+
+  async getCostAnalytics(startDate, endDate) {
+    const result = await MealDistribution.aggregate([
+      {
+        $match: {
+          status: 'completed',
+          distributionDate: { $gte: startDate, $lte: endDate },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalStandardCost: { $sum: '$totalStandardCost' },
+          totalActualCost: { $sum: '$totalActualCost' },
+          totalWasteCost: { $sum: '$totalWasteCost' },
+        },
+      },
+    ]);
+
+    if (result.length > 0) {
+      const { totalStandardCost, totalActualCost, totalWasteCost } = result[0];
+      const varianceAmount = totalActualCost - totalStandardCost;
+      const variancePercentage = totalStandardCost > 0 ? (varianceAmount / totalStandardCost) * 100 : 0;
+      return {
+        totalStandardCost,
+        totalActualCost,
+        totalWasteCost,
+        varianceAmount,
+        variancePercentage,
+      };
+    }
+
+    return {
+      totalStandardCost: 0,
+      totalActualCost: 0,
+      totalWasteCost: 0,
+      varianceAmount: 0,
+      variancePercentage: 0,
+    };
+  },
+
   async getReservationsToday(startOfDay, endOfDay) {
     return Reservation.countDocuments({
       createdAt: { $gte: startOfDay, $lte: endOfDay },
@@ -146,6 +189,52 @@ const dashboardRepository = {
   async getMealDistributionsToday(startOfDay, endOfDay) {
     return MealDistribution.countDocuments({
       distributionDate: { $gte: startOfDay, $lte: endOfDay },
+    });
+  },
+
+  async getPlannedMealsToday(startOfDay, endOfDay) {
+    const result = await MealRequest.aggregate([
+      {
+        $match: {
+          requestDate: { $gte: startOfDay, $lte: endOfDay },
+          status: { $ne: 'rejected' },
+        },
+      },
+      { $unwind: '$items' },
+      {
+        $group: {
+          _id: null,
+          totalMeals: { $sum: '$items.requestedServings' },
+        },
+      },
+    ]);
+    return result.length > 0 ? result[0].totalMeals : 0;
+  },
+
+  async getDistributedMealsToday(startOfDay, endOfDay) {
+    const result = await MealDistribution.aggregate([
+      {
+        $match: {
+          distributionDate: { $gte: startOfDay, $lte: endOfDay },
+          status: { $in: ['in_progress', 'completed'] },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalMeals: { 
+            $sum: { $ifNull: ['$actualServings', { $ifNull: ['$plannedServings', 0] }] } 
+          },
+        },
+      },
+    ]);
+    return result.length > 0 ? result[0].totalMeals : 0;
+  },
+
+  async getReturnsToday(startOfDay, endOfDay) {
+    return InventoryTransaction.countDocuments({
+      transactionDate: { $gte: startOfDay, $lte: endOfDay },
+      transactionType: { $in: ['return', 'return_to_supplier'] },
     });
   },
 

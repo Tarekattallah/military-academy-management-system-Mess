@@ -129,6 +129,7 @@ const ROLE_DEFS = [
       'products:view',
       'categories:view',
       'units:view',
+      'warehouses:view',
       'inventory-transactions:view',
       // Reports for meals
       'reports:view',

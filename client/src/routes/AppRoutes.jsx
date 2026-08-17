@@ -24,6 +24,7 @@ import { ReportsPage } from '../pages/reports/ReportsPage';
 import { SettingsPage } from '../pages/settings/SettingsPage';
 import { AuditLogPage } from '../pages/auditLog/AuditLogPage';
 import { NotificationsPage } from '../pages/notifications/NotificationsPage';
+import { DailyClosingPage } from '../pages/dailyClosing/DailyClosingPage';
 import { ProtectedRoute } from './ProtectedRoute';
 
 export function AppRoutes() {
@@ -162,6 +163,14 @@ export function AppRoutes() {
         element={
         <ProtectedRoute requiredPermission="inventory-transactions:view">
             <InventoryPage />
+          </ProtectedRoute>
+        } />
+      
+      <Route
+        path="/daily-closing"
+        element={
+        <ProtectedRoute requiredPermission="inventory-transactions:view">
+            <DailyClosingPage />
           </ProtectedRoute>
         } />
       

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '../../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
+import { Button } from '../../components/ui/Button';
 import { DataTable } from '../../components/ui/DataTable';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Skeleton } from '../../components/ui/Skeleton';
@@ -15,8 +16,12 @@ import {
   getDashboardWaste,
   getDashboardReservations,
   getDashboardDistributions,
-  getDashboardWarehouses } from
+  getDashboardWarehouses,
+  getDashboardCost,
+  getWarehouses,
+  getClosings } from
 '../../lib/api/entities';
+import { useNavigate } from 'react-router-dom';
 import {
   Boxes,
   AlertTriangle,
@@ -39,7 +44,8 @@ import {
   ShoppingCart,
   PieChart,
   TrendingUp,
-  Activity } from
+  Activity,
+  Store } from
 'lucide-react';
 
 function KpiCard({
@@ -90,10 +96,6 @@ function SectionCard({
   title,
   icon: Icon,
   children
-
-
-
-
 }) {
   return (
     <Card>
@@ -106,8 +108,8 @@ function SectionCard({
         </div>
       </CardHeader>
       <CardContent>{children}</CardContent>
-    </Card>);
-
+    </Card>
+  );
 }
 
 function LoadingSkeleton() {
@@ -125,20 +127,7 @@ function LoadingSkeleton() {
           </Card>
         )}
       </div>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {Array.from({ length: 2 }).map((_, i) =>
-        <Card key={i}>
-            <CardHeader>
-              <Skeleton className="h-5 w-40" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-32 w-full" />
-            </CardContent>
-          </Card>
-        )}
-      </div>
     </div>);
-
 }
 
 function ErrorCard({ message }) {
@@ -149,6 +138,63 @@ function ErrorCard({ message }) {
 
 }
 
+// ── Daily Closing Status Card ──────────────────────────────────────────
+
+function DailyClosingStatusCard() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+
+  const { data: warehouses = [] } = useQuery({
+    queryKey: ['warehouses'],
+    queryFn: getWarehouses
+  });
+
+  const selectedWarehouse = warehouses.length > 0 ? warehouses[0]._id : null;
+
+  const { data: closingsData } = useQuery({
+    queryKey: ['dailyClosings', selectedWarehouse],
+    queryFn: () => getClosings({ warehouse: selectedWarehouse, sort: '-logicalDate', limit: 1 }),
+    enabled: !!selectedWarehouse
+  });
+
+  const closing = closingsData?.data?.[0];
+
+  if (!closing) return null;
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'OPEN': return <Badge variant="success">{t('dailyClosing.status.OPEN')}</Badge>;
+      case 'RECONCILING': return <Badge variant="warning">{t('dailyClosing.status.RECONCILING')}</Badge>;
+      case 'PENDING_APPROVAL': return <Badge variant="info">{t('dailyClosing.status.PENDING_APPROVAL')}</Badge>;
+      case 'CLOSED': return <Badge variant="destructive">{t('dailyClosing.status.CLOSED')}</Badge>;
+      default: return null;
+    }
+  };
+
+  return (
+    <div className="rounded-xl border bg-card p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+      <div className="flex items-center gap-4">
+        <div className="rounded-full bg-primary/10 p-3 text-primary">
+          <Store className="size-6" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-lg">{t('dashboard.dailyClosingStatus')}</h3>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+            <span>{new Date(closing.logicalDate).toLocaleDateString('ar-EG')}</span>
+            <span>•</span>
+            <span>{closing.warehouse?.name}</span>
+            <span>•</span>
+            {getStatusBadge(closing.status)}
+          </div>
+        </div>
+      </div>
+      <Button onClick={() => navigate('/daily-closing')} variant={closing.status === 'OPEN' ? 'default' : 'outline'}>
+        {closing.status === 'OPEN' ? t('dailyClosing.actions.reconcile') : 'عرض اليومية'}
+      </Button>
+    </div>
+  );
+}
+
 // ── Analysis Section ──────────────────────────────────────────────────
 
 function AnalysisSection() {
@@ -157,8 +203,9 @@ function AnalysisSection() {
   const { data: inventory } = useQuery({ queryKey: ['dashboard', 'inventory'], queryFn: getDashboardInventory });
   const { data: waste } = useQuery({ queryKey: ['dashboard', 'waste'], queryFn: getDashboardWaste });
   const { data: consumption } = useQuery({ queryKey: ['dashboard', 'consumption'], queryFn: getDashboardConsumption });
+  const { data: costAnalytics } = useQuery({ queryKey: ['dashboard', 'cost'], queryFn: getDashboardCost });
 
-  if (!summary || !inventory || !waste || !consumption) return <LoadingSkeleton />;
+  if (!summary || !inventory || !waste || !consumption || !costAnalytics) return <LoadingSkeleton />;
 
   const consumeMonth = consumption.totalConsumptionThisMonth?.totalCost || 0;
   const wasteMonth = waste.totalWasteThisMonth || 0;
@@ -290,11 +337,74 @@ function TodaySection() {
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
       <KpiCard icon={PackagePlus} label="استلام" value={data.receivingsToday} tone="success" />
       <KpiCard icon={ArrowDownUp} label="تحويلات" value={data.transfersToday} />
+      <KpiCard icon={Undo2} label="مرتجعات" value={data.returnsToday || 0} />
       <KpiCard icon={Trash2} label="هالك" value={data.wasteRecordsToday} tone="destructive" />
-      <KpiCard icon={CalendarCheck} label="حجوزات" value={data.reservationsToday} />
       <KpiCard icon={UtensilsCrossed} label="توزيعات" value={data.mealDistributionsToday} tone="success" />
     </div>);
 
+}
+
+// ── Meals Overview Section (Mess Officer Specific) ───────────────────
+
+function MealsOverviewSection() {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['dashboard', 'today'],
+    queryFn: getDashboardToday
+  });
+
+  if (isLoading) return <LoadingSkeleton />;
+  if (error || !data) return <ErrorCard message="فشل تحميل عمليات الوجبات" />;
+
+  const planned = data.plannedMealsToday || 0;
+  const distributed = data.distributedMealsToday || 0;
+  const executionRate = planned > 0 ? Math.round((distributed / planned) * 100) : 0;
+  const diff = distributed - planned;
+  
+  const diffTone = diff === 0 ? 'success' : (Math.abs(diff) > (planned * 0.1) ? 'destructive' : 'warning');
+  const diffLabel = diff === 0 ? 'مطابق تماماً' : (diff > 0 ? `زيادة بمقدار ${diff}` : `نقص بمقدار ${Math.abs(diff)}`);
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <KpiCard icon={BookOpen} label="الوجبات المخططة" value={planned} />
+        <KpiCard icon={UtensilsCrossed} label="الوجبات الموزعة فعلياً" value={distributed} tone={executionRate >= 95 ? 'success' : 'warning'} />
+        <KpiCard icon={Activity} label="نسبة التنفيذ" value={`${executionRate}%`} tone={executionRate >= 95 ? 'success' : (executionRate < 80 ? 'destructive' : 'warning')} />
+      </div>
+      
+      <div className="rounded-lg border bg-card p-4 flex items-center justify-between">
+        <div>
+          <h4 className="font-semibold text-foreground">تحليل التخطيط مقابل الفعلي (Planned vs Actual)</h4>
+          <p className="text-sm text-muted-foreground mt-1">يعكس هذا المؤشر دقة التخطيط بناءً على طلبات الإعاشة مقابل الصرف الفعلي.</p>
+        </div>
+        <Badge variant={diffTone} className="text-sm px-3 py-1">
+           {diffLabel}
+        </Badge>
+      </div>
+    </div>
+  );
+}
+
+// ── Movement Summary Section ─────────────────────────────────────────
+
+function MovementSummarySection() {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['dashboard', 'today'],
+    queryFn: getDashboardToday
+  });
+
+  if (isLoading) return <LoadingSkeleton />;
+  if (error || !data) return <ErrorCard message="فشل تحميل حركات المخزون" />;
+
+  return (
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+      <KpiCard icon={PackagePlus} label="استلام (Receiving)" value={data.receivingsToday} tone="success" />
+      <KpiCard icon={UtensilsCrossed} label="صرف (Issue)" value={data.mealDistributionsToday} tone="success" />
+      <KpiCard icon={ArrowDownUp} label="تحويل (Transfer)" value={data.transfersToday} />
+      <KpiCard icon={Undo2} label="مرتجع (Return)" value={data.returnsToday || 0} />
+      <KpiCard icon={Trash2} label="هالك (Waste)" value={data.wasteRecordsToday} tone="destructive" />
+      <KpiCard icon={CalendarCheck} label="حجز (Reserve)" value={data.reservationsToday} />
+    </div>
+  );
 }
 
 // ── Consumption Section ──────────────────────────────────────────────
@@ -517,6 +627,7 @@ function SuperAdminDashboard() {
   const { t } = useTranslation();
   return (
     <div className="space-y-6">
+      <DailyClosingStatusCard />
       <SectionCard title={t('dashboard.smartAnalysis')} icon={Activity}>
         <AnalysisSection />
       </SectionCard>
@@ -595,18 +706,33 @@ function StoreKeeperDashboard() {
 function MessOfficerDashboard() {
   return (
     <div className="space-y-6">
-      <SectionCard title="الاستهلاك" icon={ShoppingCart}>
-        <ConsumptionSection />
+      <DailyClosingStatusCard />
+      <SectionCard title="مؤشرات اليوم (Meals Overview)" icon={Activity}>
+        <MealsOverviewSection />
       </SectionCard>
+      
+      <SectionCard title="ملخص حركات المخزون (Inventory Movement)" icon={ArrowDownUp}>
+        <MovementSummarySection />
+      </SectionCard>
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <SectionCard title="الحجوزات" icon={CalendarCheck}>
+        <SectionCard title="مراقبة الاستهلاك (Consumption)" icon={ShoppingCart}>
+          <ConsumptionSection />
+        </SectionCard>
+        <SectionCard title="مراقبة الهالك (Waste Monitoring)" icon={Trash2}>
+          <WasteSection />
+        </SectionCard>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <SectionCard title="حالات طلبات الحجوزات" icon={CalendarCheck}>
           <ReservationSection />
         </SectionCard>
-        <SectionCard title="التوزيعات" icon={UtensilsCrossed}>
+        <SectionCard title="حالات عمليات التوزيع" icon={UtensilsCrossed}>
           <DistributionSection />
         </SectionCard>
       </div>
-      <SectionCard title="نظرة عامة على المخزون" icon={Layers}>
+      <SectionCard title="الصحة العامة للمخزون (Inventory Health)" icon={Layers}>
         <InventorySection />
       </SectionCard>
     </div>

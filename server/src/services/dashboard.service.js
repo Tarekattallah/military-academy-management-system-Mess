@@ -84,12 +84,18 @@ const dashboardService = {
       wasteRecordsToday,
       reservationsToday,
       mealDistributionsToday,
+      plannedMealsToday,
+      distributedMealsToday,
+      returnsToday,
     ] = await Promise.all([
       dashboardRepository.getReceivingsToday(startOfDay, endOfDay),
       dashboardRepository.getTransfersToday(startOfDay, endOfDay),
       dashboardRepository.getWasteRecordsToday(startOfDay, endOfDay),
       dashboardRepository.getReservationsToday(startOfDay, endOfDay),
       dashboardRepository.getMealDistributionsToday(startOfDay, endOfDay),
+      dashboardRepository.getPlannedMealsToday(startOfDay, endOfDay),
+      dashboardRepository.getDistributedMealsToday(startOfDay, endOfDay),
+      dashboardRepository.getReturnsToday(startOfDay, endOfDay),
     ]);
 
     return {
@@ -98,6 +104,9 @@ const dashboardService = {
       wasteRecordsToday,
       reservationsToday,
       mealDistributionsToday,
+      plannedMealsToday,
+      distributedMealsToday,
+      returnsToday,
     };
   },
 
@@ -149,6 +158,28 @@ const dashboardService = {
       totalWasteToday,
       totalWasteThisMonth,
       topWastedProducts,
+    };
+  },
+
+  /**
+   * Cost Analytics
+   * Returns total standard, actual, waste costs and variances for today and this month.
+   */
+  async getCostAnalytics() {
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000 - 1);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+    const [today, thisMonth] = await Promise.all([
+      dashboardRepository.getCostAnalytics(startOfDay, endOfDay),
+      dashboardRepository.getCostAnalytics(startOfMonth, endOfMonth),
+    ]);
+
+    return {
+      today,
+      thisMonth,
     };
   },
 

@@ -192,6 +192,20 @@ export function RecipesPage() {
 
   },
   {
+    accessorKey: 'standardCost',
+    header: 'التكلفة المعيارية',
+    cell: ({ row }) =>
+    <span className="font-semibold text-primary">{(row.original.standardCost || 0).toLocaleString('ar-EG')} جنيه</span>
+  },
+  {
+    id: 'costPerServing',
+    header: 'التكلفة للفرد',
+    cell: ({ row }) => {
+      const costPerServing = (row.original.standardCost || 0) / (row.original.yield || 1);
+      return <span className="font-medium text-muted-foreground">{costPerServing.toLocaleString('ar-EG', { maximumFractionDigits: 2 })} جنيه</span>;
+    }
+  },
+  {
     accessorKey: 'status',
     header: 'الحالة',
     cell: ({ row }) =>

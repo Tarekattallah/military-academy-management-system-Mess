@@ -7,6 +7,7 @@ const Product = require('../models/product.model');
 const Warehouse = require('../models/warehouse.model');
 const Supplier = require('../models/supplier.model');
 const Receiving = require('../models/receiving.model');
+const dailyClosingService = require('./dailyClosing.service');
 const AppError = require('../utils/AppError');
 
 const receivingService = {
@@ -26,6 +27,9 @@ const receivingService = {
    */
   async create(data) {
     const { supplier: supplierId, warehouse: warehouseId, receivingDate, notes, createdBy, items } = data;
+
+    const opDate = receivingDate || new Date();
+    await dailyClosingService.assertOperationalDayWritable(warehouseId, opDate);
 
     // ── Validate supplier exists and is active ───────────────────────────
     const supplier = await Supplier.findById(supplierId);
@@ -215,6 +219,9 @@ const receivingService = {
     if (receiving.status !== 'completed') {
       throw new AppError(`Cannot cancel a receiving with status "${receiving.status}". Only completed receivings can be cancelled.`, 400);
     }
+
+    const whId = receiving.warehouse._id ? receiving.warehouse._id.toString() : receiving.warehouse.toString();
+    await dailyClosingService.assertOperationalDayWritable(whId, receiving.receivingDate);
 
     const session = undefined; // await mongoose.startSession();
     try {

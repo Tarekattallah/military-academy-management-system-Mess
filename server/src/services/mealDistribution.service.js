@@ -5,6 +5,7 @@ const MealRequest = require('../models/mealRequest.model');
 const Recipe = require('../models/recipe.model');
 const MealDistribution = require('../models/mealDistribution.model');
 const inventoryTransactionService = require('./inventoryTransaction.service');
+const dailyClosingService = require('./dailyClosing.service');
 const AppError = require('../utils/AppError');
 
 // Valid status transitions
@@ -47,6 +48,7 @@ async function buildRecipeSnapshots(mealRequest) {
       recipeName: recipe.name,
       recipeNumber: recipe.recipeNumber,
       recipeYield: recipe.yield,
+      standardCost: recipe.standardCost || 0,
       ingredients,
     });
   }
@@ -79,6 +81,10 @@ const mealDistributionService = {
       );
     }
 
+    const warehouseId = reservation.warehouse._id ? reservation.warehouse._id.toString() : reservation.warehouse.toString();
+    const distributionDate = data.distributionDate || new Date();
+    await dailyClosingService.assertOperationalDayWritable(warehouseId, distributionDate);
+
     // ── Prevent duplicate active distributions ─────────────────────────────
     const existingDistribution = await MealDistribution.findOne({
       reservation: reservationId,
@@ -104,9 +110,13 @@ const mealDistributionService = {
       product: resItem.product,
       batch: resItem.batch,
       plannedQuantity: resItem.reservedQuantity,
+      issuedQuantity: resItem.reservedQuantity, // default suggestion to planned
       actualQuantity: 0,
       wastageQuantity: 0,
+      returnedQuantity: 0,
     }));
+
+    const plannedServings = mealRequest.items.reduce((sum, item) => sum + item.requestedServings, 0) || 1;
 
     // ── Generate distribution number ───────────────────────────────────────
     const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -120,10 +130,11 @@ const mealDistributionService = {
       mealRequest: reservation.mealRequest._id || reservation.mealRequest,
       menu: reservation.menu,
       requestingUnit: reservation.requestingUnit,
-      distributionDate: new Date(),
+      distributionDate,
       status: 'draft',
       distributedBy,
       notes,
+      plannedServings,
       recipeSnapshots,
       items,
     });
@@ -146,10 +157,21 @@ const mealDistributionService = {
    * all changes are rolled back.
    */
   async complete(id, data, completedBy) {
-    const { items: completeItems, notes } = data;
+    const { items: completeItems, notes, actualServings } = data;
 
     const distribution = await mealDistributionRepository.findById(id);
     if (!distribution) throw new AppError('Meal distribution not found', 404);
+
+    if (actualServings === undefined || actualServings === null) {
+      throw new AppError('Actual servings are required before completing the meal distribution.', 400);
+    }
+
+    if (actualServings < 0) {
+      throw new AppError('Actual servings cannot be negative', 400);
+    }
+    if (distribution.plannedServings !== undefined && actualServings > distribution.plannedServings) {
+      throw new AppError('Actual servings cannot exceed planned servings', 400);
+    }
 
     if (distribution.status !== 'draft' && distribution.status !== 'in_progress') {
       throw new AppError(
@@ -157,6 +179,14 @@ const mealDistributionService = {
         400
       );
     }
+
+    // Freeze Check for the Distribution completion
+    const reservationForComplete = await Reservation.findById(distribution.reservation._id || distribution.reservation);
+    if (!reservationForComplete) throw new AppError('Reservation not found', 404);
+    
+    const whId = reservationForComplete.warehouse._id ? reservationForComplete.warehouse._id.toString() : reservationForComplete.warehouse.toString();
+    const completedAt = new Date();
+    await dailyClosingService.assertOperationalDayWritable(whId, completedAt);
 
     // ── Move validation inside the transaction ──────────────────────────────
     // Build a map of distribution items by batch+product key
@@ -195,6 +225,8 @@ const mealDistributionService = {
 
       // ── Process each item: create inventory transactions ────────────────
       const updatedItems = [];
+      let totalActualCost = 0;
+      let totalWasteCost = 0;
 
       for (const completeItem of completeItems) {
         const key = `${completeItem.batch}:${completeItem.product}`;
@@ -206,6 +238,10 @@ const mealDistributionService = {
           );
         }
 
+        if (completeItem.issuedQuantity < 0) {
+          throw new AppError(`Issued quantity for batch ${completeItem.batch} must be non-negative`, 400);
+        }
+
         if (completeItem.actualQuantity < 0) {
           throw new AppError(`Actual quantity for batch ${completeItem.batch} must be non-negative`, 400);
         }
@@ -214,40 +250,83 @@ const mealDistributionService = {
           throw new AppError(`Wastage quantity for batch ${completeItem.batch} must be non-negative`, 400);
         }
 
-        const actualQty = completeItem.actualQuantity;
+        if (completeItem.returnedQuantity < 0) {
+          throw new AppError(`Returned quantity for batch ${completeItem.batch} must be non-negative`, 400);
+        }
+
+        const issuedQty = completeItem.issuedQuantity || 0;
+        const actualQty = completeItem.actualQuantity || 0;
         const wastageQty = completeItem.wastageQuantity || 0;
-        const totalDeducted = actualQty + wastageQty;
+        const returnedQty = completeItem.returnedQuantity || 0;
 
-        // Create InventoryTransaction of type 'issue'
-        // This is the ONLY place where inventory is deducted.
-        // InventoryTransactionService handles:
-        //   - Batch.availableQuantity -= totalDeducted
-        //   - Batch status update (auto-deplete if quantity reaches 0)
-        //   - CurrentStock update
-        const transactionData = {
-          batch: completeItem.batch,
-          product: completeItem.product,
-          warehouse: warehouseId,
-          transactionType: 'issue',
-          quantity: totalDeducted,
-          unitCost: 0,
-          referenceType: 'MealDistribution',
-          referenceId: freshDistribution._id,
-          reason: 'Meal distribution',
-          performedBy: completedBy,
-          notes: notes || undefined,
-        };
+        // Validation: issuedQuantity <= plannedQuantity
+        if (issuedQty > distItem.plannedQuantity) {
+          throw new AppError(`Issued quantity (${issuedQty}) cannot exceed planned quantity (${distItem.plannedQuantity}) for batch ${completeItem.batch}`, 400);
+        }
 
-        const inventoryTransaction = await inventoryTransactionService.create(transactionData, { session });
+        // Closed-Loop Reconciliation Validation:
+        // The total of what was consumed (actual), wasted, and returned must equal exactly what was issued.
+        const totalAccounted = actualQty + wastageQty + returnedQty;
+        // using a small epsilon for float comparison safety
+        if (Math.abs(issuedQty - totalAccounted) > 0.001) {
+          throw new AppError(`Reconciliation failed for batch ${completeItem.batch}. Issued (${issuedQty}) must equal Actual (${actualQty}) + Wastage (${wastageQty}) + Returned (${returnedQty})`, 400);
+        }
+
+        let inventoryTransaction;
+
+        // Create 'issue' transaction for actual consumed quantity (if > 0)
+        if (actualQty > 0) {
+          const issueTransactionData = {
+            batch: completeItem.batch,
+            product: completeItem.product,
+            warehouse: warehouseId,
+            transactionType: 'issue',
+            quantity: actualQty,
+            unitCost: 0, // Service will pick batch.unitCost
+            referenceType: 'MealDistribution',
+            referenceId: freshDistribution._id,
+            reason: 'Meal distribution consumption',
+            performedBy: completedBy,
+            notes: notes || undefined,
+          };
+          const issueTx = await inventoryTransactionService.create(issueTransactionData, { session });
+          inventoryTransaction = issueTx;
+          totalActualCost += issueTx.totalCost || 0;
+        }
+
+        // Create 'waste' transaction for cooking/preparation waste (if > 0)
+        if (wastageQty > 0) {
+          const wasteTransactionData = {
+            batch: completeItem.batch,
+            product: completeItem.product,
+            warehouse: warehouseId,
+            transactionType: 'waste',
+            quantity: wastageQty,
+            unitCost: 0, // Service will pick batch.unitCost
+            referenceType: 'MealDistribution',
+            referenceId: freshDistribution._id,
+            reason: 'Meal distribution wastage (scrap)',
+            performedBy: completedBy,
+            notes: notes || undefined,
+          };
+          const wasteTx = await inventoryTransactionService.create(wasteTransactionData, { session });
+          totalWasteCost += wasteTx.totalCost || 0;
+          
+          if (!inventoryTransaction) {
+            inventoryTransaction = wasteTx;
+          }
+        }
 
         updatedItems.push({
           recipe: distItem.recipe._id || distItem.recipe,
           product: completeItem.product,
           batch: completeItem.batch,
           plannedQuantity: distItem.plannedQuantity,
+          issuedQuantity: issuedQty,
           actualQuantity: actualQty,
           wastageQuantity: wastageQty,
-          inventoryTransaction: inventoryTransaction._id,
+          returnedQuantity: returnedQty,
+          inventoryTransaction: inventoryTransaction ? inventoryTransaction._id : undefined,
         });
       }
 
@@ -262,14 +341,41 @@ const mealDistributionService = {
       );
 
       // ── Update Distribution status to 'completed' ───────────────────────
+      const finalActualServings = actualServings !== undefined ? actualServings : freshDistribution.plannedServings;
+      
+      let standardCostPerServing = 0;
+      for (const snap of freshDistribution.recipeSnapshots) {
+        if (snap.recipeYield > 0) {
+          standardCostPerServing += (snap.standardCost || 0) / snap.recipeYield;
+        }
+      }
+      
+      const totalStandardCost = standardCostPerServing * freshDistribution.plannedServings;
+      const actualCostPerServing = finalActualServings > 0 ? (totalActualCost / finalActualServings) : 0;
+      
+      const varianceAmount = totalActualCost - totalStandardCost;
+      const variancePercentage = totalStandardCost > 0 ? (varianceAmount / totalStandardCost) * 100 : 0;
+      const operationalCost = totalActualCost + totalWasteCost;
+
       await mealDistributionRepository.updateById(
         freshDistribution._id,
         {
           status: 'completed',
           completedBy,
-          completedAt: new Date(),
+          completedAt,
+          actualServings: finalActualServings,
           items: updatedItems,
           notes: notes || freshDistribution.notes,
+          
+          // Cost Snapshots
+          totalStandardCost,
+          totalActualCost,
+          totalWasteCost,
+          operationalCost,
+          standardCostPerServing,
+          actualCostPerServing,
+          varianceAmount,
+          variancePercentage
         },
         { session }
       );
@@ -302,6 +408,12 @@ const mealDistributionService = {
       );
     }
 
+    const reservationForCancel = await Reservation.findById(distribution.reservation._id || distribution.reservation);
+    if (reservationForCancel) {
+      const whId = reservationForCancel.warehouse._id ? reservationForCancel.warehouse._id.toString() : reservationForCancel.warehouse.toString();
+      await dailyClosingService.assertOperationalDayWritable(whId, distribution.distributionDate);
+    }
+
     // ── Preserve original notes, store cancellation details separately ──
     return mealDistributionRepository.updateById(id, {
       status: 'cancelled',
@@ -325,6 +437,14 @@ const mealDistributionService = {
         `Cannot transition distribution from "${distribution.status}" to "${newStatus}". Allowed transitions from "${distribution.status}": ${allowed.length ? allowed.join(', ') : 'none'}.`,
         400
       );
+    }
+
+    const reservationForUpdate = await Reservation.findById(distribution.reservation._id || distribution.reservation);
+    if (reservationForUpdate) {
+      const whId = reservationForUpdate.warehouse._id ? reservationForUpdate.warehouse._id.toString() : reservationForUpdate.warehouse.toString();
+      // Use completedAt if transitioning to completed, else distributionDate
+      const opDate = newStatus === 'completed' ? new Date() : distribution.distributionDate;
+      await dailyClosingService.assertOperationalDayWritable(whId, opDate);
     }
 
     const updated = await mealDistributionRepository.updateById(id, { status: newStatus });

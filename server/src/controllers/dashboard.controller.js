@@ -41,6 +41,11 @@ const getWarehouseStatistics = catchAsync(async (req, res) => {
   res.status(200).json({ success: true, data: result });
 });
 
+const getCostAnalytics = catchAsync(async (req, res) => {
+  const result = await dashboardService.getCostAnalytics();
+  res.status(200).json({ success: true, data: result });
+});
+
 module.exports = {
   getSummary,
   getInventoryOverview,
@@ -50,4 +55,5 @@ module.exports = {
   getReservationAnalytics,
   getDistributionAnalytics,
   getWarehouseStatistics,
+  getCostAnalytics,
 };

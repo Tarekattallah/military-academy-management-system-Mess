@@ -53,6 +53,29 @@ export function ReportsPage() {
   const [warehouse, setWarehouse] = useState('');
   const [product, setProduct] = useState('');
 
+  // Quick date presets
+  const handleDatePreset = (preset) => {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    
+    if (preset === 'today') {
+      setStartDate(todayStr);
+      setEndDate(todayStr);
+    } else if (preset === 'week') {
+      const lastWeek = new Date(today);
+      lastWeek.setDate(today.getDate() - 7);
+      setStartDate(lastWeek.toISOString().split('T')[0]);
+      setEndDate(todayStr);
+    } else if (preset === 'month') {
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      setStartDate(firstDay.toISOString().split('T')[0]);
+      setEndDate(todayStr);
+    } else if (preset === 'clear') {
+      setStartDate('');
+      setEndDate('');
+    }
+  };
+
   // Fetch warehouse list for filtering
   const { data: warehouses = [] } = useQuery({
     queryKey: ['warehouses'],
@@ -165,17 +188,22 @@ export function ReportsPage() {
 
       case 'meal-distributions':
         return [
-        { accessorKey: 'distributionNumber', header: 'رقم التوزيع' },
+        { accessorKey: 'distributionNumber', header: 'رقم التوزيع', cell: ({ row }) => <span className="font-mono font-semibold">{row.original.distributionNumber}</span> },
         { accessorKey: 'requestingUnit', header: 'الكتيبة' },
-        { accessorKey: 'status', header: 'الحالة' },
-        { accessorKey: 'totalItems', header: 'الأصناف المستهلكة', cell: ({ row }) => <span className="font-mono">{row.original.totalItems || 0}</span> },
+        { accessorKey: 'status', header: 'الحالة', cell: ({ row }) => {
+            const statusColors = { completed: 'success', in_progress: 'warning', draft: 'secondary', cancelled: 'destructive' };
+            const statusLabels = { completed: 'مكتمل', in_progress: 'قيد التحضير', draft: 'مسودة', cancelled: 'ملغي' };
+            return <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium bg-${statusColors[row.original.status] || 'secondary'}/10 text-${statusColors[row.original.status] || 'secondary'}`}>{statusLabels[row.original.status] || row.original.status}</span>;
+          }
+        },
+        { accessorKey: 'totalItems', header: 'الأصناف المستهلكة', cell: ({ row }) => <span className="font-mono">{row.original.items?.length || 0}</span> },
         { accessorKey: 'distributionDate', header: 'التاريخ', cell: ({ row }) => new Date(row.original.distributionDate).toLocaleDateString('ar-EG') }];
 
       case 'consumption':
         return [
         { accessorKey: 'productName', header: 'المنتج الغذائي' },
-        { accessorKey: 'totalQuantity', header: 'الكمية المستهلكة الكلية', cell: ({ row }) => <span className="font-mono text-primary font-bold">{row.original.totalQuantity || 0}</span> },
-        { accessorKey: 'totalCost', header: 'التكلفة الإجمالية', cell: ({ row }) => <span className="font-mono text-success">{(row.original.totalCost || 0).toLocaleString('ar-EG')} ر.س</span> }];
+        { accessorKey: 'transactionCount', header: 'مرات الصرف', cell: ({ row }) => <span className="font-mono text-muted-foreground">{row.original.transactionCount || 0}</span> },
+        { accessorKey: 'totalConsumed', header: 'الكمية المستهلكة', cell: ({ row }) => <span className="font-mono text-primary font-bold">{row.original.totalConsumed || 0}</span> }];
 
       default:
         return [];
@@ -233,12 +261,22 @@ export function ReportsPage() {
                 )}
               </select>
             </FormField>
+            
+            <div className="space-y-2 border-t border-border pt-4 mt-2">
+              <span className="text-xs font-semibold text-muted-foreground block">اختيار سريع للفترة:</span>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" onClick={() => handleDatePreset('today')} className="text-xs h-7">اليوم</Button>
+                <Button variant="outline" size="sm" onClick={() => handleDatePreset('week')} className="text-xs h-7">آخر 7 أيام</Button>
+                <Button variant="outline" size="sm" onClick={() => handleDatePreset('month')} className="text-xs h-7">هذا الشهر</Button>
+                <Button variant="ghost" size="sm" onClick={() => handleDatePreset('clear')} className="text-xs h-7 text-muted-foreground">مسح</Button>
+              </div>
+            </div>
 
-            <FormField label="تاريخ البداية">
+            <FormField label="تاريخ البداية (من)">
               <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
             </FormField>
 
-            <FormField label="تاريخ النهاية">
+            <FormField label="تاريخ النهاية (إلى)">
               <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </FormField>
 

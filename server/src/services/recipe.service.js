@@ -35,13 +35,27 @@ const recipeService = {
       if (!productMap[pid]) throw new AppError(`Product ${pid} not found`, 404);
     }
 
+    // ── Calculate Standard Cost & Validate Units ───────────────────────────
+    let standardCost = 0;
+    for (const item of items) {
+      const product = productMap[item.product];
+      const itemUnitId = item.unit._id ? item.unit._id.toString() : item.unit.toString();
+      const productUnitId = product.unit._id ? product.unit._id.toString() : product.unit.toString();
+      
+      if (itemUnitId !== productUnitId) {
+        throw new AppError(`Unit mismatch for product "${product.name}". Expected unit ID ${productUnitId}, got ${itemUnitId}.`, 400);
+      }
+      
+      standardCost += item.quantity * (product.unitPrice || 0);
+    }
+
     // ── Generate recipe number ────────────────────────────────────────────
     const Recipe = require('../models/recipe.model');
     const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const count = await Recipe.countDocuments();
     const recipeNumber = `RCP-${datePart}-${String(count + 1).padStart(4, '0')}`;
 
-    return recipeRepository.create({ ...data, name: trimmed, recipeNumber, createdBy });
+    return recipeRepository.create({ ...data, name: trimmed, recipeNumber, createdBy, standardCost });
   },
 
   /**
@@ -82,6 +96,21 @@ const recipeService = {
       for (const pid of uniqueProductIds) {
         if (!productMap[pid]) throw new AppError(`Product ${pid} not found`, 404);
       }
+
+      // ── Calculate Standard Cost & Validate Units ───────────────────────────
+      let standardCost = 0;
+      for (const item of data.items) {
+        const product = productMap[item.product];
+        const itemUnitId = item.unit._id ? item.unit._id.toString() : item.unit.toString();
+        const productUnitId = product.unit._id ? product.unit._id.toString() : product.unit.toString();
+        
+        if (itemUnitId !== productUnitId) {
+          throw new AppError(`Unit mismatch for product "${product.name}". Expected unit ID ${productUnitId}, got ${itemUnitId}.`, 400);
+        }
+        
+        standardCost += item.quantity * (product.unitPrice || 0);
+      }
+      data.standardCost = standardCost;
     }
 
     const updated = await recipeRepository.updateById(id, data);
@@ -124,6 +153,44 @@ const recipeService = {
     const recipe = await recipeRepository.findById(id);
     if (!recipe) throw new AppError('Recipe not found', 404);
     return recipe;
+  },
+  /**
+   * Recalculates standardCost for all recipes containing a specific product.
+   * Called by Product service when a product's unit price changes.
+   */
+  async recalculateCostsForProduct(productId) {
+    const Recipe = require('../models/recipe.model');
+    // Find all recipes containing this product
+    const recipes = await Recipe.find({ 'items.product': productId });
+    
+    if (!recipes.length) return;
+    
+    // For each recipe, calculate new standard cost
+    for (const recipe of recipes) {
+      // Need to populate products to get their latest unitPrices
+      const populatedRecipe = await Recipe.findById(recipe._id).populate('items.product');
+      let standardCost = 0;
+      let hasMismatch = false;
+      
+      for (const item of populatedRecipe.items) {
+        const product = item.product; // populated
+        const itemUnitId = item.unit._id ? item.unit._id.toString() : item.unit.toString();
+        const productUnitId = product.unit._id ? product.unit._id.toString() : product.unit.toString();
+        
+        if (itemUnitId !== productUnitId) {
+          hasMismatch = true;
+          // Log error, but we cannot fail the whole operation easily.
+          console.error(`Unit mismatch in recipe ${recipe.recipeNumber} for product ${product.name}`);
+        } else {
+          standardCost += item.quantity * (product.unitPrice || 0);
+        }
+      }
+      
+      if (!hasMismatch) {
+        recipe.standardCost = standardCost;
+        await recipe.save();
+      }
+    }
   },
 };
 

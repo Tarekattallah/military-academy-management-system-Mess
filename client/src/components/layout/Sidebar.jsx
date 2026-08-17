@@ -83,7 +83,8 @@ const getNavCategories = (t) => [
   { to: '/waste', label: t('sidebar.waste'), icon: Trash2, permission: 'wastes:view' },
   { to: '/stock-counts', label: t('sidebar.stockCounts'), icon: ClipboardList, permission: 'stock-counts:view' },
   { to: '/batches', label: t('sidebar.batches'), icon: Layers, permission: 'batches:view' },
-  { to: '/inventory', label: t('sidebar.inventory'), icon: ClipboardCheck, permission: 'inventory-transactions:view' }]
+  { to: '/inventory', label: t('sidebar.inventory'), icon: ClipboardCheck, permission: 'inventory-transactions:view' },
+  { to: '/daily-closing', label: t('dailyClosing.title'), icon: Store, permission: 'inventory-transactions:view' }]
 },
 {
   label: t('sidebar.meals'),

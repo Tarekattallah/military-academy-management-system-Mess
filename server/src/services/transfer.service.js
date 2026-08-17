@@ -5,6 +5,7 @@ const inventoryTransactionService = require('./inventoryTransaction.service');
 const Product = require('../models/product.model');
 const Warehouse = require('../models/warehouse.model');
 const Transfer = require('../models/transfer.model');
+const dailyClosingService = require('./dailyClosing.service');
 const AppError = require('../utils/AppError');
 
 const transferService = {
@@ -30,6 +31,10 @@ const transferService = {
    */
   async create(data) {
     const { sourceWarehouse: sourceWarehouseId, destinationWarehouse: destinationWarehouseId, transferDate, notes, createdBy, items } = data;
+
+    const opDate = transferDate || new Date();
+    await dailyClosingService.assertOperationalDayWritable(sourceWarehouseId, opDate);
+    await dailyClosingService.assertOperationalDayWritable(destinationWarehouseId, opDate);
 
     // ── Validate source warehouse ───────────────────────────────────────
     const sourceWarehouse = await Warehouse.findById(sourceWarehouseId);
@@ -248,6 +253,11 @@ const transferService = {
     if (transfer.status !== 'completed') {
       throw new AppError(`Cannot cancel a transfer with status "${transfer.status}". Only completed transfers can be cancelled.`, 400);
     }
+
+    const srcWhId = transfer.sourceWarehouse._id ? transfer.sourceWarehouse._id.toString() : transfer.sourceWarehouse.toString();
+    const destWhId = transfer.destinationWarehouse._id ? transfer.destinationWarehouse._id.toString() : transfer.destinationWarehouse.toString();
+    await dailyClosingService.assertOperationalDayWritable(srcWhId, transfer.transferDate);
+    await dailyClosingService.assertOperationalDayWritable(destWhId, transfer.transferDate);
 
     const session = undefined; // await mongoose.startSession();
     try {

@@ -6,6 +6,7 @@ const Product = require('../models/product.model');
 const Warehouse = require('../models/warehouse.model');
 const Supplier = require('../models/supplier.model');
 const Return = require('../models/return.model');
+const dailyClosingService = require('./dailyClosing.service');
 const AppError = require('../utils/AppError');
 
 // ── Reference type to model mapping ──────────────────────────────────────
@@ -42,6 +43,9 @@ const returnService = {
    */
   async create(data) {
     const { returnType, warehouse: warehouseId, supplier: supplierId, referenceType, referenceId, returnDate, reason, notes, createdBy, items } = data;
+
+    const opDate = returnDate || new Date();
+    await dailyClosingService.assertOperationalDayWritable(warehouseId, opDate);
 
     // ── Validate return type ───────────────────────────────────────────────
     const validTypes = ['return_to_supplier', 'internal_return'];
@@ -132,6 +136,7 @@ const returnService = {
           throw new AppError(`Item ${index + 1}: Insufficient available quantity. Requested: ${item.quantity}, Available: ${batch.availableQuantity}`, 400);
         }
       }
+
 
       // Capture the batch's unitCost
       batchMap[item.batch] = batch.unitCost || 0;
@@ -281,6 +286,9 @@ const returnService = {
     if (returnDoc.status !== 'completed') {
       throw new AppError(`Cannot cancel a return with status "${returnDoc.status}". Only completed returns can be cancelled.`, 400);
     }
+
+    const whId = returnDoc.warehouse._id ? returnDoc.warehouse._id.toString() : returnDoc.warehouse.toString();
+    await dailyClosingService.assertOperationalDayWritable(whId, returnDoc.returnDate);
 
     const session = undefined; // await mongoose.startSession();
     try {

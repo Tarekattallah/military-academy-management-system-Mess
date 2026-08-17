@@ -57,6 +57,10 @@ const reservationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Menu',
     },
+    operationalDate: {
+      type: Date,
+      required: true,
+    },
     status: {
       type: String,
       enum: ['draft', 'reserved', 'released', 'consumed'],

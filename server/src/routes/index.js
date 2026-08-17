@@ -27,6 +27,7 @@ const dashboardRoutes = require('./dashboard.routes');
 const notificationRoutes = require('./notification.routes');
 const auditLogRoutes = require('./auditLog.routes');
 const settingsRoutes = require('./settings.routes');
+const dailyClosingRoutes = require('./dailyClosing.routes');
 
 const router = express.Router();
 
@@ -61,5 +62,6 @@ router.use('/dashboard', dashboardRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/audit-logs', auditLogRoutes);
 router.use('/settings', settingsRoutes);
+router.use('/daily-closings', dailyClosingRoutes);
 
 module.exports = router;

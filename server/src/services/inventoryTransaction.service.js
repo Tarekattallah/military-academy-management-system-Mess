@@ -119,10 +119,13 @@ const inventoryTransactionService = {
    * @param {number} [data.currentQuantity] - For 'adjustment' type, the current physical quantity
    */
   async create(data, options = {}) {
-    const { batch: batchId, product: productId, warehouse: warehouseId, transactionType, quantity, unitCost, referenceType, referenceId, reason, performedBy, notes, currentQuantity } = data;
+    const { batch: batchId, product: productId, warehouse: warehouseId, transactionType, quantity, unitCost, referenceType, referenceId, reason, performedBy, notes, currentQuantity, transactionDate = new Date() } = data;
     const { session: externalSession } = options;
 
     if (quantity < 0) throw new AppError('Quantity must be a positive number', 400);
+
+    const dailyClosingService = require('./dailyClosing.service');
+    await dailyClosingService.assertOperationalDayWritable(warehouseId, transactionDate);
 
     // ── Validate product exists and is active ───────────────────────────
     const product = await Product.findById(productId);
@@ -144,10 +147,10 @@ const inventoryTransactionService = {
     const batchProductId = batch.product._id ? batch.product._id.toString() : batch.product.toString();
     const batchWarehouseId = batch.warehouse._id ? batch.warehouse._id.toString() : batch.warehouse.toString();
 
-    if (batchProductId !== productId) {
+    if (batchProductId !== productId.toString()) {
       throw new AppError('Batch does not belong to the specified product', 400);
     }
-    if (batchWarehouseId !== warehouseId) {
+    if (batchWarehouseId !== warehouseId.toString()) {
       throw new AppError('Batch does not belong to the specified warehouse', 400);
     }
 
@@ -181,6 +184,7 @@ const inventoryTransactionService = {
           reason,
           performedBy,
           notes,
+          transactionDate,
         }, externalSession);
 
         await updateBatchQuantity(batchId, transactionType, quantity, currentQuantity, externalSession);
@@ -207,6 +211,7 @@ const inventoryTransactionService = {
           reason,
           performedBy,
           notes,
+          transactionDate,
         });
 
         await updateBatchQuantity(batchId, transactionType, quantity, currentQuantity);

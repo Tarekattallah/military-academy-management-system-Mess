@@ -479,6 +479,11 @@ export async function getDashboardWarehouses() {
   return data.data;
 }
 
+export async function getDashboardCost() {
+  const { data } = await api.get('/dashboard/cost');
+  return data.data;
+}
+
 // ── Inventory Transactions API ─────────────────────────────────────────
 
 export async function getBatches(query) {
@@ -712,5 +717,37 @@ export async function getSystemSettings() {
 
 export async function updateSystemSettings(payload) {
   const { data } = await api.put('/settings', payload);
+  return data.data;
+}
+
+// ── Daily Closings ────────────────────────────────────────────────────────
+
+export async function getClosings(params) {
+  const { data } = await api.get('/daily-closings', { params });
+  return data;
+}
+
+export async function getClosingById(id) {
+  const { data } = await api.get(`/daily-closings/${id}`);
+  return data.data;
+}
+
+export async function openDay(payload) {
+  const { data } = await api.post('/daily-closings/open', payload);
+  return data.data;
+}
+
+export async function startReconciliation(id) {
+  const { data } = await api.post(`/daily-closings/${id}/reconcile`);
+  return data.data;
+}
+
+export async function submitClosing(id, payload) {
+  const { data } = await api.post(`/daily-closings/${id}/submit`, payload);
+  return data.data;
+}
+
+export async function approveClosing(id, payload) {
+  const { data } = await api.post(`/daily-closings/${id}/approve`, payload);
   return data.data;
 }

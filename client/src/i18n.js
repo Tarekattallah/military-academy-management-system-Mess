@@ -67,7 +67,69 @@ const resources = {
         efficiencyAvg: 'متوسطة',
         efficiencyDesc: 'بناءً على معدلات السحب الشهري',
         wasteRatio: 'معدل الهالك للشهر',
-        wasteDesc: 'نسبة الهالك إلى إجمالي الاستهلاك'
+        wasteDesc: 'نسبة الهالك إلى إجمالي الاستهلاك',
+        dailyClosingStatus: 'حالة اليومية'
+      },
+      dailyClosing: {
+        title: 'الإغلاق اليومي',
+        openDayTitle: 'فتح الإغلاق اليومي',
+        status: {
+          OPEN: 'مفتوح',
+          RECONCILING: 'قيد التسوية',
+          PENDING_APPROVAL: 'في انتظار الاعتماد',
+          CLOSED: 'مغلق'
+        },
+        actions: {
+          open: 'فتح اليومية',
+          reconcile: 'بدء التسوية',
+          continueReconcile: 'متابعة التسوية',
+          submit: 'إرسال للاعتماد',
+          approve: 'اعتماد وإغلاق اليومية'
+        },
+        sections: {
+          openingStock: 'رصيد الافتتاح',
+          closingStock: 'الرصيد الختامي',
+          inventorySummary: 'ملخص المخزون',
+          mealSummary: 'ملخص الوجبات',
+          costSummary: 'ملخص التكاليف',
+          reconciliation: 'التسويات'
+        },
+        fields: {
+          date: 'تاريخ اليومية',
+          warehouse: 'المستودع',
+          currentStatus: 'الحالة الحالية',
+          product: 'المنتج',
+          batch: 'الدفعة',
+          unit: 'الوحدة',
+          quantity: 'الكمية',
+          value: 'القيمة الإجمالية',
+          plannedMeals: 'الوجبات المخططة',
+          actualMeals: 'الوجبات المنفذة',
+          executionRate: 'نسبة التنفيذ',
+          totalStandardCost: 'التكلفة المعيارية',
+          totalActualCost: 'التكلفة الفعلية',
+          totalWasteCost: 'تكلفة الهدر',
+          operationalCost: 'التكلفة التشغيلية',
+          varianceAmount: 'قيمة الانحراف',
+          totalReceiving: 'الوارد',
+          totalIssue: 'المنصرف',
+          totalWaste: 'الهالك',
+          totalReturn: 'المرتجع',
+          totalTransferIn: 'تحويل وارد',
+          totalTransferOut: 'تحويل صادر',
+          totalAdjustment: 'التسويات',
+          expectedStock: 'الرصيد المتوقع',
+          physicalStock: 'الرصيد الفعلي',
+          discrepancy: 'الفرق'
+        },
+        messages: {
+          frozenError: 'اليومية مغلقة ولا يمكن تعديل عملياتها.',
+          approveConfirm: 'هل أنت متأكد من اعتماد وإغلاق اليومية؟ بعد الإغلاق لن يمكن تعديل العمليات الخاصة بهذا اليوم.',
+          closedInfo: 'اليومية مغلقة ولا يمكن تعديل عمليات هذا اليوم بعد الاعتماد.',
+          noDayOpened: 'اليومية غير مفتوحة بعد',
+          openDayConfirm: 'هل أنت متأكد من فتح يومية جديدة لهذا المستودع؟',
+          submitConfirm: 'هل أنت متأكد من إرسال اليومية للاعتماد؟ ستتوقف العمليات ولن يمكن إجراء حركات مخزنية لهذا اليوم.'
+        }
       }
     }
   }

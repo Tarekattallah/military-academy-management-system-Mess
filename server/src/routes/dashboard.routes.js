@@ -65,4 +65,11 @@ router.get(
   dashboardController.getWarehouseStatistics
 );
 
+// Cost Analytics
+router.get(
+  '/cost',
+  authorize('dashboard:view'),
+  dashboardController.getCostAnalytics
+);
+
 module.exports = router;

@@ -122,6 +122,16 @@ const productService = {
 
     const updated = await productRepository.updateById(id, data);
     if (!updated) throw new AppError('Product not found', 404);
+
+    // If unitPrice changed, recalculate standardCost for recipes using this product
+    if (data.unitPrice !== undefined && data.unitPrice !== product.unitPrice) {
+      const recipeService = require('./recipe.service');
+      // Fire and forget (or await if we want to ensure it completes before returning)
+      await recipeService.recalculateCostsForProduct(id).catch(err => {
+        console.error(`Failed to recalculate recipe costs for product ${id}:`, err);
+      });
+    }
+
     return updated;
   },
 

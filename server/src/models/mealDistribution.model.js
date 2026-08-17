@@ -28,6 +28,7 @@ const recipeSnapshotSchema = new mongoose.Schema(
     recipeName: { type: String, required: true },
     recipeNumber: { type: String, required: true },
     recipeYield: { type: Number, required: true, min: 1 },
+    standardCost: { type: Number, default: 0 },
     ingredients: { type: [ingredientSnapshotSchema], required: true },
   },
   { _id: false }
@@ -57,12 +58,22 @@ const distributionItemSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    issuedQuantity: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     actualQuantity: {
       type: Number,
       required: true,
       min: 0,
     },
     wastageQuantity: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    returnedQuantity: {
       type: Number,
       default: 0,
       min: 0,
@@ -138,6 +149,18 @@ const mealDistributionSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    plannedServings: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    actualServings: {
+      type: Number,
+      min: 0,
+      required: function () {
+        return this.status === 'completed';
+      },
+    },
     // ── Immutable snapshots ──────────────────────────────────────────────
     recipeSnapshots: {
       type: [recipeSnapshotSchema],
@@ -146,6 +169,31 @@ const mealDistributionSchema = new mongoose.Schema(
         validator: (snapshots) => snapshots.length > 0,
         message: 'Must have at least one recipe snapshot',
       },
+    },
+    // ── Cost Snapshots (populated on complete) ───────────────────────────
+    totalStandardCost: {
+      type: Number,
+    },
+    totalActualCost: {
+      type: Number,
+    },
+    totalWasteCost: {
+      type: Number,
+    },
+    operationalCost: {
+      type: Number,
+    },
+    standardCostPerServing: {
+      type: Number,
+    },
+    actualCostPerServing: {
+      type: Number,
+    },
+    varianceAmount: {
+      type: Number,
+    },
+    variancePercentage: {
+      type: Number,
     },
     // ── Distribution items (references the reserved batches) ─────────────
     items: {

@@ -48,6 +48,11 @@ const recipeSchema = new mongoose.Schema(
       required: true,
       min: 1,
     },
+    standardCost: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     status: {
       type: String,
       enum: ['active', 'inactive'],
