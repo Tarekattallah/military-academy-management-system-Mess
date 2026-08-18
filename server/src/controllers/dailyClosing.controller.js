@@ -1,7 +1,7 @@
 const dailyClosingService = require('../services/dailyClosing.service');
 const dailyClosingRepository = require('../repositories/dailyClosing.repository');
 const catchAsync = require('../utils/catchAsync');
-const AppError = require('../utils/appError');
+const AppError = require('../utils/AppError');
 
 const openDay = catchAsync(async (req, res) => {
   const { logicalDate, warehouse } = req.body;

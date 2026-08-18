@@ -2,7 +2,7 @@ const dailyClosingRepository = require('../repositories/dailyClosing.repository'
 const InventoryTransaction = require('../models/inventoryTransaction.model');
 const MealDistribution = require('../models/mealDistribution.model');
 const Reservation = require('../models/reservation.model');
-const AppError = require('../utils/appError');
+const AppError = require('../utils/AppError');
 
 class DailyClosingService {
   /**
