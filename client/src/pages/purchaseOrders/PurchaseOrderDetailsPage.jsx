@@ -276,7 +276,7 @@ export function PurchaseOrderDetailsPage() {
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">{t('purchaseOrders.fields.createdAt')}:</span>
-              <span className="font-medium">{format(new Date(po.createdAt), 'dd MMM yyyy HH:mm', { locale: ar })}</span>
+              <span className="font-medium">{po.createdAt ? format(new Date(po.createdAt), 'dd MMM yyyy HH:mm', { locale: ar }) : '-'}</span>
             </div>
             
             {po.approvedBy && (
@@ -288,7 +288,7 @@ export function PurchaseOrderDetailsPage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{t('purchaseOrders.fields.approvedAt')}:</span>
-                  <span className="font-medium">{format(new Date(po.approvedAt), 'dd MMM yyyy HH:mm', { locale: ar })}</span>
+                  <span className="font-medium">{po.approvedAt ? format(new Date(po.approvedAt), 'dd MMM yyyy HH:mm', { locale: ar }) : '-'}</span>
                 </div>
               </>
             )}
@@ -302,7 +302,7 @@ export function PurchaseOrderDetailsPage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{t('purchaseOrders.fields.rejectedAt')}:</span>
-                  <span className="font-medium">{format(new Date(po.rejectedAt), 'dd MMM yyyy HH:mm', { locale: ar })}</span>
+                  <span className="font-medium">{po.rejectedAt ? format(new Date(po.rejectedAt), 'dd MMM yyyy HH:mm', { locale: ar }) : '-'}</span>
                 </div>
                 <div className="flex flex-col gap-1 text-sm mt-2 p-3 bg-destructive/10 rounded-md border border-destructive/20 text-destructive">
                   <span className="font-semibold">{t('purchaseOrders.fields.rejectionReason')}:</span>

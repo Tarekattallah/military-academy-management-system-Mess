@@ -6,7 +6,7 @@ const openDay = Joi.object({
 });
 
 const startReconciliation = Joi.object({
-  // Only needs the ID from params
+  id: Joi.string().hex().length(24).required(),
 });
 
 const submitClosing = Joi.object({

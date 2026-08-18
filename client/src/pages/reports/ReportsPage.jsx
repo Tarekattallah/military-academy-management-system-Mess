@@ -157,7 +157,7 @@ export function ReportsPage() {
         { accessorKey: 'warehouseName', header: 'المستودع المستلم' },
         { accessorKey: 'totalItems', header: 'عدد الأصناف', cell: ({ row }) => <span className="font-mono">{row.original.totalItems || 0}</span> },
         { accessorKey: 'totalCost', header: 'التكلفة الإجمالية', cell: ({ row }) => <span className="font-mono font-bold text-success">{row.original.totalCost?.toLocaleString('ar-EG')} ر.س</span> },
-        { accessorKey: 'receivedDate', header: 'تاريخ الاستلام', cell: ({ row }) => new Date(row.original.receivedDate).toLocaleDateString('ar-EG') }];
+        { accessorKey: 'receivedDate', header: 'تاريخ الاستلام', cell: ({ row }) => row.original.receivedDate ? new Date(row.original.receivedDate).toLocaleDateString('ar-EG') : '-' }];
 
       case 'transfers':
         return [
@@ -166,7 +166,7 @@ export function ReportsPage() {
         { accessorKey: 'toWarehouseName', header: 'المستودع المستقبل' },
         { accessorKey: 'totalItems', header: 'الأصناف', cell: ({ row }) => <span className="font-mono">{row.original.totalItems || 0}</span> },
         { accessorKey: 'status', header: 'الحالة', cell: ({ row }) => row.original.status === 'completed' ? 'مكتمل' : 'قيد التحويل' },
-        { accessorKey: 'transferDate', header: 'التاريخ', cell: ({ row }) => new Date(row.original.transferDate).toLocaleDateString('ar-EG') }];
+        { accessorKey: 'transferDate', header: 'التاريخ', cell: ({ row }) => row.original.transferDate ? new Date(row.original.transferDate).toLocaleDateString('ar-EG') : '-' }];
 
       case 'wastes':
         return [
@@ -175,7 +175,7 @@ export function ReportsPage() {
         { accessorKey: 'productName', header: 'المنتج' },
         { accessorKey: 'quantity', header: 'الكمية التالفة', cell: ({ row }) => <span className="font-mono text-destructive">{row.original.quantity}</span> },
         { accessorKey: 'reason', header: 'السبب' },
-        { accessorKey: 'wasteDate', header: 'التاريخ', cell: ({ row }) => new Date(row.original.wasteDate).toLocaleDateString('ar-EG') }];
+        { accessorKey: 'wasteDate', header: 'التاريخ', cell: ({ row }) => row.original.wasteDate ? new Date(row.original.wasteDate).toLocaleDateString('ar-EG') : '-' }];
 
       case 'reservations':
         return [
@@ -184,7 +184,7 @@ export function ReportsPage() {
         { accessorKey: 'warehouseName', header: 'المستودع' },
         { accessorKey: 'status', header: 'الحالة', cell: ({ row }) => row.original.status },
         { accessorKey: 'totalCost', header: 'القيمة التقديرية', cell: ({ row }) => <span className="font-mono">{row.original.totalCost || 0} ر.س</span> },
-        { accessorKey: 'reservedDate', header: 'تاريخ الحجز', cell: ({ row }) => new Date(row.original.reservedDate).toLocaleDateString('ar-EG') }];
+        { accessorKey: 'reservedDate', header: 'تاريخ الحجز', cell: ({ row }) => row.original.reservedDate ? new Date(row.original.reservedDate).toLocaleDateString('ar-EG') : '-' }];
 
       case 'meal-distributions':
         return [
@@ -197,7 +197,7 @@ export function ReportsPage() {
           }
         },
         { accessorKey: 'totalItems', header: 'الأصناف المستهلكة', cell: ({ row }) => <span className="font-mono">{row.original.items?.length || 0}</span> },
-        { accessorKey: 'distributionDate', header: 'التاريخ', cell: ({ row }) => new Date(row.original.distributionDate).toLocaleDateString('ar-EG') }];
+        { accessorKey: 'distributionDate', header: 'التاريخ', cell: ({ row }) => row.original.distributionDate ? new Date(row.original.distributionDate).toLocaleDateString('ar-EG') : '-' }];
 
       case 'consumption':
         return [

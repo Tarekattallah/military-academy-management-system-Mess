@@ -28,7 +28,7 @@ async function runTests() {
     
     // Clean up
     await DailyClosing.deleteMany({ warehouse: warehouse._id });
-    await Reservation.deleteMany({ reservationNumber: { $regex: /^RES-TEST/ } });
+    await Reservation.deleteMany({ warehouse: warehouse._id });
     await InventoryTransaction.deleteMany({ referenceType: 'TEST_ADJ' });
 
     const D1 = new Date(); D1.setUTCHours(0,0,0,0);
@@ -73,6 +73,7 @@ async function runTests() {
       reservationNumber: 'RES-TEST-CURR',
       mealRequest: mealReqId,
       warehouse: warehouse._id,
+      operationalDate: D1,
       status: 'reserved',
       createdAt: D1,
       items: [{ recipe: new mongoose.Types.ObjectId(), batch: new mongoose.Types.ObjectId(), product: new mongoose.Types.ObjectId(), reservedQuantity: 1 }]
@@ -82,6 +83,7 @@ async function runTests() {
       reservationNumber: 'RES-TEST-FUT',
       mealRequest: mealReqId,
       warehouse: warehouse._id,
+      operationalDate: D2,
       status: 'reserved',
       createdAt: D2, // Future
       items: [{ recipe: new mongoose.Types.ObjectId(), batch: new mongoose.Types.ObjectId(), product: new mongoose.Types.ObjectId(), reservedQuantity: 1 }]
@@ -164,7 +166,7 @@ async function runTests() {
     console.log('PASSED: Day 2 opened successfully:', day2.logicalDate);
     
     // Clean up future reservation so it doesn't block Day 2
-    await Reservation.findByIdAndDelete(resFuture._id);
+    await Reservation.deleteMany({ warehouse: warehouse._id });
 
     const recDay2 = await dailyClosingService.startReconciliation(day2._id, user._id);
     const subDay2 = await dailyClosingService.submitForApproval(day2._id, user._id);

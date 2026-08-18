@@ -171,7 +171,7 @@ export function ReceivingDetailsPage() {
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">{t('receiving.fields.receivingDate')}:</span>
-              <span className="font-medium">{format(new Date(receiving.receivingDate), 'dd MMM yyyy HH:mm', { locale: ar })}</span>
+              <span className="font-medium">{receiving.receivingDate ? format(new Date(receiving.receivingDate), 'dd MMM yyyy HH:mm', { locale: ar }) : '-'}</span>
             </div>
 
             {receiving.status === 'cancelled' && (

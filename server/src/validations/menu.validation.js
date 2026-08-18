@@ -7,6 +7,7 @@ const itemSchema = Joi.object({
 });
 
 const create = Joi.object({
+  menuNumber: Joi.string().trim().optional(),
   menuDate: Joi.date().iso().required(),
   mealType: Joi.string().valid('breakfast', 'lunch', 'dinner').required(),
   notes: Joi.string().trim().max(500).optional().allow('', null),
@@ -14,6 +15,7 @@ const create = Joi.object({
 });
 
 const update = Joi.object({
+  menuNumber: Joi.string().trim().optional(),
   menuDate: Joi.date().iso().optional(),
   mealType: Joi.string().valid('breakfast', 'lunch', 'dinner').optional(),
   notes: Joi.string().trim().max(500).optional().allow('', null),

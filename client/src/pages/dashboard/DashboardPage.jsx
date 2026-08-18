@@ -180,7 +180,7 @@ function DailyClosingStatusCard() {
         <div>
           <h3 className="font-semibold text-lg">{t('dashboard.dailyClosingStatus')}</h3>
           <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-            <span>{new Date(closing.logicalDate).toLocaleDateString('ar-EG')}</span>
+            <span>{closing.logicalDate ? new Date(closing.logicalDate).toLocaleDateString('ar-EG') : '-'}</span>
             <span>•</span>
             <span>{closing.warehouse?.name}</span>
             <span>•</span>

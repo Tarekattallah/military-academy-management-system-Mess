@@ -7,6 +7,9 @@ const Product = require('./src/models/product.model');
 const Supplier = require('./src/models/supplier.model');
 const Batch = require('./src/models/batch.model');
 const Receiving = require('./src/models/receiving.model');
+const PurchaseOrder = require('./src/models/purchaseOrder.model');
+require('./src/models/purchaseRequest.model');
+require('./src/models/unit.model');
 require('./src/models/inventoryTransaction.model');
 const receivingService = require('./src/services/receiving.service');
 const dailyClosingService = require('./src/services/dailyClosing.service');
@@ -30,6 +33,7 @@ async function runTests() {
     // Clean up
     await DailyClosing.deleteMany({ warehouse: { $in: [warehouse1._id, warehouse2._id] } });
     await Receiving.deleteMany({ receivingNumber: { $regex: 'RCV-TEST-P23' } });
+    await PurchaseOrder.deleteMany({ orderNumber: { $regex: 'PO-TEST-P23' } });
     await Batch.deleteMany({ batchNumber: { $regex: 'BATCH-TEST-P23' } });
 
     const d1 = new Date();
@@ -42,7 +46,25 @@ async function runTests() {
     let batchCounter = 1;
     const createRcv = async (whId, date) => {
       const bNum = 'BATCH-TEST-P23-' + batchCounter++;
+      const po = await PurchaseOrder.create({
+        orderNumber: 'PO-TEST-P23-' + batchCounter,
+        supplier: supplier._id,
+        warehouse: whId,
+        status: 'approved',
+        createdBy: user._id,
+        items: [{
+          product: product._id,
+          unit: product.unit,
+          quantity: 100,
+          unitPrice: 5,
+          totalPrice: 500,
+          receivedQuantity: 0,
+          remainingQuantity: 100,
+        }]
+      });
+
       return receivingService.create({
+        purchaseOrder: po._id.toString(),
         supplier: supplier._id.toString(),
         warehouse: whId.toString(),
         receivingDate: date,

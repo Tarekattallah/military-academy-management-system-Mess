@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import api from '../lib/api';
 
@@ -17,6 +18,7 @@ import api from '../lib/api';
 const AuthContext = createContext(undefined);
 
 export function AuthProvider({ children }) {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -46,7 +48,8 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     await api.post('/auth/logout');
     setUser(null);
-  }, []);
+    queryClient.clear();
+  }, [queryClient]);
 
   const hasPermission = useCallback(
     (permission) => !!user?.permissions.includes(permission),

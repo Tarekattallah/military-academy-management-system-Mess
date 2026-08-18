@@ -6,13 +6,18 @@ const create = Joi.object({
 });
 
 const complete = Joi.object({
+  actualServings: Joi.number().integer().min(0).optional().messages({
+    'number.min': 'Actual servings cannot be negative',
+  }),
   items: Joi.array()
     .items(
       Joi.object({
         batch: Joi.string().hex().length(24).required(),
         product: Joi.string().hex().length(24).required(),
+        issuedQuantity: Joi.number().min(0).optional(),
         actualQuantity: Joi.number().min(0).required(),
         wastageQuantity: Joi.number().min(0).default(0),
+        returnedQuantity: Joi.number().min(0).default(0),
       })
     )
     .min(1)

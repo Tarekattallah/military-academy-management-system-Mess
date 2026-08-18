@@ -22,16 +22,17 @@ async function runTests() {
     const warehouse = await Warehouse.findOne();
     const user = await User.findOne();
 
-    // Clean up
-    await DailyClosing.deleteMany({ warehouse: warehouse._id });
-    await Reservation.deleteMany({ reservationNumber: { $regex: 'TEST-P12' } });
-    await MealDistribution.deleteMany({ notes: 'TEST-P12' });
-
     const D1 = new Date();
     D1.setUTCHours(0, 0, 0, 0);
 
     const D2 = new Date(D1);
     D2.setUTCDate(D2.getUTCDate() + 1);
+
+    // Clean up
+    await DailyClosing.deleteMany({ warehouse: warehouse._id });
+    await Reservation.deleteMany({ warehouse: warehouse._id });
+    await MealDistribution.deleteMany({ distributionDate: { $gte: D1, $lte: D2 } });
+    await InventoryTransaction.deleteMany({ warehouse: warehouse._id, transactionDate: { $gte: D1, $lte: D2 } });
 
     const dummyReq = await MealRequest.findOne() || { _id: new mongoose.Types.ObjectId() };
 
