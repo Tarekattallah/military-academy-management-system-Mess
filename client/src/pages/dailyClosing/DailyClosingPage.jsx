@@ -48,7 +48,7 @@ export function DailyClosingPage() {
   }, [warehouses, selectedWarehouse]);
 
   // Fetch latest closing for selected warehouse
-  const { data: closingsData, isLoading: isLoadingClosings, error } = useQuery({
+  const { data: closingsData, isLoading: isLoadingClosings } = useQuery({
     queryKey: ['dailyClosings', selectedWarehouse],
     queryFn: () => getClosings({ warehouse: selectedWarehouse, sort: '-logicalDate', limit: 1 }),
     enabled: !!selectedWarehouse,

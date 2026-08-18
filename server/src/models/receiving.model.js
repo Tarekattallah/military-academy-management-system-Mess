@@ -41,6 +41,11 @@ const receivingSchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
+    purchaseOrder: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'PurchaseOrder',
+      required: true,
+    },
     supplier: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Supplier',

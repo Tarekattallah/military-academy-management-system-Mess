@@ -66,7 +66,7 @@ export function Header({ title }) {
   let hijriString = "";
   try {
     hijriString = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {day: 'numeric', month: 'long', year: 'numeric'}).format(time);
-  } catch (e) {
+  } catch {
     hijriString = "";
   }
 

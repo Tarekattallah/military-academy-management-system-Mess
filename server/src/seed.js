@@ -35,6 +35,8 @@ const MODULES = [
   'reports',
   'settings',
   'dashboard',
+  'purchase-requests',
+  'purchase-orders',
 ];
 const ACTIONS = ['view', 'create', 'update', 'delete', 'approve'];
 
@@ -82,6 +84,9 @@ const ROLE_DEFS = [
       'current-stock:view',
       // Reports
       'reports:view',
+      // Procurement
+      'purchase-requests:view', 'purchase-requests:approve',
+      'purchase-orders:view', 'purchase-orders:create', 'purchase-orders:approve',
     ],
   },
   {
@@ -109,6 +114,9 @@ const ROLE_DEFS = [
       'current-stock:view',
       // Inventory view
       'inventory-transactions:view',
+      // Procurement (create PRs, view POs)
+      'purchase-requests:view', 'purchase-requests:create', 'purchase-requests:update',
+      'purchase-orders:view',
     ],
   },
   {
@@ -133,6 +141,9 @@ const ROLE_DEFS = [
       'inventory-transactions:view',
       // Reports for meals
       'reports:view',
+      // Procurement (create PRs, view POs)
+      'purchase-requests:view', 'purchase-requests:create',
+      'purchase-orders:view',
     ],
   },
 ];

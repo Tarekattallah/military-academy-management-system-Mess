@@ -12,12 +12,18 @@ const supplierService = {
     return supplier;
   },
 
-  async create({ name, contactPerson, phone, email, address, taxId, notes, isActive }) {
+  async create({ name, code, contactPerson, phone, email, address, taxId, paymentTerms, leadTimeDays, notes, isActive }) {
     const trimmed = name.trim();
     const existing = await supplierRepository.findByName(trimmed);
     if (existing) throw new AppError('Supplier already exists', 409);
 
-    return supplierRepository.create({ name: trimmed, contactPerson, phone, email, address, taxId, notes, isActive });
+    // Check unique code if provided
+    if (code) {
+      const existingCode = await supplierRepository.findByCode(code.trim().toUpperCase());
+      if (existingCode) throw new AppError('Supplier code already in use', 409);
+    }
+
+    return supplierRepository.create({ name: trimmed, code: code ? code.trim().toUpperCase() : undefined, contactPerson, phone, email, address, taxId, paymentTerms, leadTimeDays, notes, isActive });
   },
 
   async update(id, data) {

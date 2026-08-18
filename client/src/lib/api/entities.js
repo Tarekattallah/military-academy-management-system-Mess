@@ -176,7 +176,7 @@ export async function getUserById(id) {
 }
 
 export async function createUser(payload) {
-  const { confirmPassword, ...body } = payload;
+  const { confirmPassword: _confirmPassword, ...body } = payload;
   const { data } = await api.post('/users', body);
   return data.data;
 }

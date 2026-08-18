@@ -28,6 +28,8 @@ const notificationRoutes = require('./notification.routes');
 const auditLogRoutes = require('./auditLog.routes');
 const settingsRoutes = require('./settings.routes');
 const dailyClosingRoutes = require('./dailyClosing.routes');
+const purchaseRequestRoutes = require('./purchaseRequest.routes');
+const purchaseOrderRoutes = require('./purchaseOrder.routes');
 
 const router = express.Router();
 
@@ -63,5 +65,7 @@ router.use('/notifications', notificationRoutes);
 router.use('/audit-logs', auditLogRoutes);
 router.use('/settings', settingsRoutes);
 router.use('/daily-closings', dailyClosingRoutes);
+router.use('/purchase-requests', purchaseRequestRoutes);
+router.use('/purchase-orders', purchaseOrderRoutes);
 
 module.exports = router;

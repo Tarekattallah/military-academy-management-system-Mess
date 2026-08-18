@@ -7,6 +7,8 @@ const Product = require('../models/product.model');
 const Warehouse = require('../models/warehouse.model');
 const Supplier = require('../models/supplier.model');
 const Receiving = require('../models/receiving.model');
+const PurchaseOrder = require('../models/purchaseOrder.model');
+const purchaseOrderRepository = require('../repositories/purchaseOrder.repository');
 const dailyClosingService = require('./dailyClosing.service');
 const AppError = require('../utils/AppError');
 
@@ -26,7 +28,7 @@ const receivingService = {
    * If any item fails, the entire operation rolls back.
    */
   async create(data) {
-    const { supplier: supplierId, warehouse: warehouseId, receivingDate, notes, createdBy, items } = data;
+    const { purchaseOrder: purchaseOrderId, supplier: supplierId, warehouse: warehouseId, receivingDate, notes, createdBy, items } = data;
 
     const opDate = receivingDate || new Date();
     await dailyClosingService.assertOperationalDayWritable(warehouseId, opDate);
@@ -53,13 +55,44 @@ const receivingService = {
       if (!productMap[pid]) throw new AppError(`Product ${pid} not found`, 404);
     }
 
-    // ── Validate each item ───────────────────────────────────────────────
+    // ── Validate Purchase Order ──────────────────────────────────────────
+    const po = await PurchaseOrder.findById(purchaseOrderId);
+    if (!po) throw new AppError('PurchaseOrder not found', 404);
+    if (po.deletedAt) throw new AppError('PurchaseOrder not found', 404); // Soft deleted
+
+    if (!['approved', 'partially_received'].includes(po.status)) {
+      throw new AppError(`Cannot receive against PurchaseOrder with status "${po.status}"`, 400);
+    }
+
+    if (po.warehouse.toString() !== warehouseId.toString()) {
+      throw new AppError('Warehouse mismatch between Receiving and PurchaseOrder', 400);
+    }
+    if (po.supplier.toString() !== supplierId.toString()) {
+      throw new AppError('Supplier mismatch between Receiving and PurchaseOrder', 400);
+    }
+
+    // ── Validate each item against PO ────────────────────────────────────
     for (const [index, item] of items.entries()) {
       if (item.quantity <= 0) {
         throw new AppError(`Item ${index + 1}: Quantity must be positive`, 400);
       }
       if (item.manufacturingDate && item.expiryDate && new Date(item.manufacturingDate) >= new Date(item.expiryDate)) {
         throw new AppError(`Item ${index + 1}: Manufacturing date must be before expiry date`, 400);
+      }
+
+      const product = productMap[item.product.toString()];
+      const poItem = po.items.find(i => i.product.toString() === item.product.toString());
+
+      if (!poItem) {
+        throw new AppError(`Item ${index + 1}: Product "${product.name}" is not in the PurchaseOrder`, 400);
+      }
+      if (poItem.unit.toString() !== product.unit.toString()) {
+        throw new AppError(`Item ${index + 1}: Unit mismatch for Product "${product.name}"`, 400);
+      }
+      
+      const remaining = poItem.quantity - poItem.receivedQuantity;
+      if (item.quantity > remaining) {
+        throw new AppError(`Item ${index + 1}: Quantity (${item.quantity}) exceeds remaining PurchaseOrder quantity (${remaining}) for Product "${product.name}"`, 400);
       }
     }
 
@@ -76,6 +109,7 @@ const receivingService = {
       // ── Create the Receiving document (status: completed) ──────────────
       const receiving = await receivingRepository.create({
         receivingNumber,
+        purchaseOrder: purchaseOrderId,
         supplier: supplierId,
         warehouse: warehouseId,
         receivingDate: receivingDate || new Date(),
@@ -159,6 +193,33 @@ const receivingService = {
       receiving.items = processedItems;
       await receiving.save({ session });
 
+      // ── Update PurchaseOrder quantities and status ─────────────────────
+      let allItemsFullyReceived = true;
+      let anyItemPartiallyReceived = false;
+
+      for (const poItem of po.items) {
+        const receivedItem = processedItems.find(i => i.product.toString() === poItem.product.toString());
+        if (receivedItem) {
+          poItem.receivedQuantity += receivedItem.quantity;
+          poItem.remainingQuantity = poItem.quantity - poItem.receivedQuantity;
+        }
+
+        if (poItem.remainingQuantity === 0) {
+          anyItemPartiallyReceived = true;
+        } else if (poItem.receivedQuantity > 0) {
+          allItemsFullyReceived = false;
+          anyItemPartiallyReceived = true;
+        } else {
+          allItemsFullyReceived = false;
+        }
+      }
+
+      po.status = allItemsFullyReceived ? 'fully_received' : (anyItemPartiallyReceived ? 'partially_received' : 'approved');
+      await purchaseOrderRepository.updateById(po._id, {
+        items: po.items,
+        status: po.status
+      }, session);
+
       // await session.commitTransaction();
 
       return receivingRepository.findById(receiving._id);
@@ -223,6 +284,11 @@ const receivingService = {
     const whId = receiving.warehouse._id ? receiving.warehouse._id.toString() : receiving.warehouse.toString();
     await dailyClosingService.assertOperationalDayWritable(whId, receiving.receivingDate);
 
+    // ── Load and validate PurchaseOrder ──────────────────────────────────
+    const po = await PurchaseOrder.findById(receiving.purchaseOrder);
+    if (!po) throw new AppError('Related PurchaseOrder not found. Cannot cancel receiving.', 404);
+    if (po.deletedAt) throw new AppError('Related PurchaseOrder is deleted. Cannot cancel receiving.', 404);
+
     const session = undefined; // await mongoose.startSession();
     try {
       // session.startTransaction();
@@ -230,11 +296,12 @@ const receivingService = {
       // ── Process each item: reverse batch quantities ──────────────────────
       for (const item of receiving.items) {
         const { product, batchNumber, quantity, unitCost: itemUnitCost } = item;
+        const productId = product._id ? product._id.toString() : product.toString();
 
         // Find the batch for this item
-        const batch = await batchRepository.findByIdentifier(product, receiving.warehouse, batchNumber, session);
+        const batch = await batchRepository.findByIdentifier(productId, receiving.warehouse, batchNumber, session);
         if (!batch) {
-          throw new AppError(`Batch "${batchNumber}" for product "${product}" not found. Cannot cancel receiving.`, 404);
+          throw new AppError(`Batch "${batchNumber}" for product "${productId}" not found. Cannot cancel receiving.`, 404);
         }
 
         // Check if batch has enough available quantity to reverse
@@ -259,8 +326,8 @@ const receivingService = {
         // This handles both the batch quantity update and the transaction record
         await inventoryTransactionService.create({
           batch: batch._id,
-          product,
-          warehouse: receiving.warehouse,
+          product: productId,
+          warehouse: whId,
           transactionType: 'cancellation',
           quantity,
           unitCost,
@@ -278,6 +345,42 @@ const receivingService = {
         notes: receiving.notes
           ? `${receiving.notes} | CANCELLED: ${reason || 'No reason provided'}`
           : `CANCELLED: ${reason || 'No reason provided'}`,
+      }, session);
+
+      // ── Reverse PurchaseOrder quantities and status ──────────────────────
+      let allItemsFullyReceived = true;
+      let anyItemPartiallyReceived = false;
+
+      for (const poItem of po.items) {
+        const receivedItem = receiving.items.find(i => {
+          const iProductId = i.product._id ? i.product._id.toString() : i.product.toString();
+          return iProductId === poItem.product.toString();
+        });
+        if (receivedItem) {
+          poItem.receivedQuantity -= receivedItem.quantity;
+          if (poItem.receivedQuantity < 0) {
+             throw new AppError(`Cannot reverse PurchaseOrder quantity below 0 for product ${poItem.product}`, 400);
+          }
+          poItem.remainingQuantity = poItem.quantity - poItem.receivedQuantity;
+          if (poItem.remainingQuantity > poItem.quantity) {
+             throw new AppError(`Cannot reverse PurchaseOrder remaining quantity above ordered quantity for product ${poItem.product}`, 400);
+          }
+        }
+
+        if (poItem.remainingQuantity === 0) {
+          anyItemPartiallyReceived = true;
+        } else if (poItem.receivedQuantity > 0) {
+          allItemsFullyReceived = false;
+          anyItemPartiallyReceived = true;
+        } else {
+          allItemsFullyReceived = false;
+        }
+      }
+
+      po.status = allItemsFullyReceived ? 'fully_received' : (anyItemPartiallyReceived ? 'partially_received' : 'approved');
+      await purchaseOrderRepository.updateById(po._id, {
+        items: po.items,
+        status: po.status
       }, session);
 
       // await session.commitTransaction();

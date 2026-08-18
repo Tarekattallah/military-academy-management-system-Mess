@@ -29,6 +29,20 @@ const supplierSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    code: {
+      type: String,
+      trim: true,
+      uppercase: true,
+    },
+    paymentTerms: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
+    leadTimeDays: {
+      type: Number,
+      min: 0,
+    },
     notes: {
       type: String,
       trim: true,
@@ -42,5 +56,6 @@ const supplierSchema = new mongoose.Schema(
 );
 
 supplierSchema.index({ isActive: 1 });
+supplierSchema.index({ code: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model('Supplier', supplierSchema);

@@ -13,6 +13,10 @@ const supplierRepository = {
     return Supplier.findOne({ name });
   },
 
+  findByCode(code) {
+    return Supplier.findOne({ code });
+  },
+
   findAll(filter = {}) {
     return Supplier.find(filter).sort({ name: 1 });
   },

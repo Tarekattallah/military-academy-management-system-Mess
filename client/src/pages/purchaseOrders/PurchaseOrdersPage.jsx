@@ -5,27 +5,32 @@ import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { 
-  PackagePlus, 
+  ClipboardCheck, 
   Plus, 
   Eye
 } from 'lucide-react';
 
 import { useAuth } from '../../contexts/AuthContext';
-import { getReceivings, createReceiving } from '../../lib/api/receiving';
+import { getPurchaseOrders } from '../../lib/api/purchaseOrders';
 import { AppLayout } from '../../components/layout/AppLayout';
 import { Button } from '../../components/ui/Button';
 import { DataTable } from '../../components/ui/DataTable';
 import { Badge } from '../../components/ui/Badge';
 import { Dialog } from '../../components/ui/Dialog';
-import { ReceivingForm } from './components/ReceivingForm';
+import { PurchaseOrderForm } from './components/PurchaseOrderForm';
+import { createPurchaseOrder } from '../../lib/api/purchaseOrders';
 
 const STATUS_VARIANTS = {
   draft: 'secondary',
-  completed: 'success',
+  submitted: 'warning',
+  approved: 'success',
+  partially_received: 'info',
+  fully_received: 'success',
+  rejected: 'destructive',
   cancelled: 'destructive'
 };
 
-export function ReceivingPage() {
+export function PurchaseOrdersPage() {
   const { t } = useTranslation();
   const { hasPermission } = useAuth();
   const navigate = useNavigate();
@@ -33,65 +38,67 @@ export function ReceivingPage() {
 
   const [openCreate, setOpenCreate] = useState(false);
 
-  const canCreate = hasPermission('receiving:create');
+  const canCreate = hasPermission('purchase-orders:create');
 
-  const { data: receivings = [], isLoading } = useQuery({
-    queryKey: ['receivings'],
+  const { data: pos = [], isLoading } = useQuery({
+    queryKey: ['purchaseOrders'],
     queryFn: async () => {
-      return getReceivings();
+      return getPurchaseOrders();
     }
   });
 
   const createMutation = useMutation({
-    mutationFn: createReceiving,
+    mutationFn: createPurchaseOrder,
     onSuccess: () => {
-      queryClient.invalidateQueries(['receivings']);
+      queryClient.invalidateQueries(['purchaseOrders']);
       setOpenCreate(false);
     }
   });
 
   const columns = [
     {
-      header: t('receiving.fields.receivingNumber'),
-      accessorKey: 'receivingNumber',
+      header: t('purchaseOrders.fields.orderNumber'),
+      accessorKey: 'orderNumber',
       cell: ({ row }) => (
-        <span className="font-medium text-foreground">{row.original.receivingNumber}</span>
+        <span className="font-medium text-foreground">{row.original.orderNumber}</span>
       )
     },
     {
-      header: t('receiving.fields.purchaseOrder'),
-      accessorKey: 'purchaseOrder',
-      cell: ({ row }) => row.original.purchaseOrder?.orderNumber || '-'
+      header: t('purchaseOrders.fields.purchaseRequest'),
+      accessorKey: 'purchaseRequest',
+      cell: ({ row }) => row.original.purchaseRequest?.requestNumber || '-'
     },
     {
-      header: t('receiving.fields.supplier'),
+      header: t('purchaseOrders.fields.supplier'),
       accessorKey: 'supplier',
       cell: ({ row }) => row.original.supplier?.name || '-'
     },
     {
-      header: t('receiving.fields.warehouse'),
+      header: t('purchaseOrders.fields.warehouse'),
       accessorKey: 'warehouse',
       cell: ({ row }) => row.original.warehouse?.name || '-'
     },
     {
-      header: t('receiving.fields.status'),
+      header: t('purchaseOrders.fields.status'),
       accessorKey: 'status',
       cell: ({ row }) => (
         <Badge variant={STATUS_VARIANTS[row.original.status]}>
-          {t(`receiving.status.${row.original.status}`)}
+          {t(`purchaseOrders.status.${row.original.status}`)}
         </Badge>
       )
     },
     {
-      header: t('receiving.fields.receivingDate'),
-      accessorKey: 'receivingDate',
-      cell: ({ row }) => row.original.receivingDate ? format(new Date(row.original.receivingDate), 'dd MMM yyyy', { locale: ar }) : '-'
+      header: t('purchaseOrders.fields.orderDate'),
+      accessorKey: 'orderDate',
+      cell: ({ row }) => row.original.orderDate ? format(new Date(row.original.orderDate), 'dd MMM yyyy', { locale: ar }) : '-'
     },
     {
-      header: t('receiving.fields.items'),
-      accessorKey: 'items',
+      header: t('purchaseOrders.fields.totalPrice'),
+      accessorKey: 'subtotal',
       cell: ({ row }) => (
-        <span className="font-medium">{row.original.items?.length || 0}</span>
+        <span className="font-medium">
+          {row.original.subtotal?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </span>
       )
     },
     {
@@ -102,8 +109,8 @@ export function ReceivingPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(`/receiving/${row.original._id}`)}
-            title={t('receiving.actions.viewDetails')}
+            onClick={() => navigate(`/purchase-orders/${row.original._id}`)}
+            title={t('purchaseOrders.actions.viewDetails')}
           >
             <Eye className="size-4" />
           </Button>
@@ -113,32 +120,32 @@ export function ReceivingPage() {
   ];
 
   return (
-    <AppLayout title={t('receiving.title')}>
+    <AppLayout title={t('purchaseOrders.title')}>
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-primary/10 rounded-lg">
-              <PackagePlus className="size-5 text-primary" />
+              <ClipboardCheck className="size-5 text-primary" />
             </div>
-            <h1 className="text-xl font-bold tracking-tight">{t('receiving.title')}</h1>
+            <h1 className="text-xl font-bold tracking-tight">{t('purchaseOrders.title')}</h1>
           </div>
           
           {canCreate && (
             <Button onClick={() => setOpenCreate(true)}>
               <Plus className="size-4 ml-2" />
-              {t('receiving.create')}
+              {t('purchaseOrders.create')}
             </Button>
           )}
         </div>
 
         <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
           <DataTable
-            data={receivings}
+            data={pos}
             columns={columns}
-            searchPlaceholder="البحث برقم الاستلام..."
-            searchField="receivingNumber"
+            searchPlaceholder="البحث برقم الأمر..."
+            searchField="orderNumber"
             isLoading={isLoading}
-            emptyMessage={t('receiving.messages.empty')}
+            emptyMessage={t('purchaseOrders.messages.empty')}
           />
         </div>
       </div>
@@ -146,9 +153,9 @@ export function ReceivingPage() {
       <Dialog
         open={openCreate}
         onOpenChange={setOpenCreate}
-        title={t('receiving.create')}
+        title={t('purchaseOrders.create')}
       >
-        <ReceivingForm
+        <PurchaseOrderForm
           onSubmit={(data) => createMutation.mutate(data)}
           isSubmitting={createMutation.isPending}
           onCancel={() => setOpenCreate(false)}

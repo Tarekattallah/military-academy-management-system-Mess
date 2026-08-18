@@ -10,6 +10,7 @@ const itemSchema = Joi.object({
 });
 
 const create = Joi.object({
+  purchaseOrder: Joi.string().hex().length(24).required(),
   supplier: Joi.string().hex().length(24).required(),
   warehouse: Joi.string().hex().length(24).required(),
   receivingDate: Joi.date().iso().optional(),

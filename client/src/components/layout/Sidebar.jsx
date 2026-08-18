@@ -77,6 +77,8 @@ const getNavCategories = (t) => [
   label: t('sidebar.transactions'),
   icon: Store,
   items: [
+  { to: '/purchase-requests', label: t('sidebar.purchaseRequests'), icon: ClipboardList, permission: 'purchase-requests:view' },
+  { to: '/purchase-orders', label: t('sidebar.purchaseOrders'), icon: ClipboardCheck, permission: 'purchase-orders:view' },
   { to: '/receiving', label: t('sidebar.receiving'), icon: PackagePlus, permission: 'receiving:view' },
   { to: '/transfers', label: t('sidebar.transfers'), icon: ArrowLeftRight, permission: 'transfers:view' },
   { to: '/returns', label: t('sidebar.returns'), icon: Undo2, permission: 'returns:view' },
